@@ -49,8 +49,9 @@ import { initSettingsStore } from './stores/settingsStore'
 import('./setup/token_estimation_init')
 
 // 引入移动端安全区域代码，主要为了解决异形屏幕的问题
-if (CHATBOX_BUILD_TARGET === 'mobile_app' && CHATBOX_BUILD_PLATFORM === 'ios') {
-  import('./setup/mobile_safe_area')
+// 引入移动端安全区域代码，主要为了解决异形屏幕的问题
+if (CHATBOX_BUILD_TARGET === 'mobile_app') {
+  import('./setup/mobile_safe_area.js')
 }
 
 // ==========执行初始化==============
