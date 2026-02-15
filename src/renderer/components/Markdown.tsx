@@ -15,6 +15,7 @@ import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import rehypeKatex from 'rehype-katex'
+import rehypeRaw from 'rehype-raw'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -110,7 +111,7 @@ function Markdown(props: {
           ? [remarkGfm, remarkMath, remarkBreaks, remarkAddCodeIndex]
           : [remarkGfm, remarkBreaks, remarkAddCodeIndex]
       }
-      rehypePlugins={[rehypeKatex]}
+      rehypePlugins={[rehypeRaw, rehypeKatex]}
       className={`break-words ${className || ''}`}
       // react-markdown's default defaultUrlTransform will incorrectly encode query parameters in URLs (e.g. & becomes &amp;)
       // Use sanitizeUrl here to avoid that and to prevent XSS attacks
@@ -140,6 +141,18 @@ function Markdown(props: {
                 e.stopPropagation()
               }}
             />
+          ),
+          video: (props: any) => (
+            <video
+              {...props}
+              poster={props.poster ? sanitizeUrl(props.poster) : undefined}
+              className="max-w-full rounded-lg shadow-sm mt-2"
+              style={{ maxHeight: '400px' }}
+              controls
+            />
+          ),
+          source: (props: any) => (
+            <source {...props} src={props.src ? sanitizeUrl(props.src) : undefined} />
           ),
         }),
         [uniqueId, hiddenCodeCopyButton, enableMermaidRendering, generating, generatingCodeIndex, forceColorScheme]
@@ -184,9 +197,9 @@ export const CodeRenderer = memo(
           {children}
         </BlockCode>
         {language === 'svg' ||
-        (language === 'text' && String(children).startsWith('<svg')) ||
-        (language === 'xml' && String(children).startsWith('<svg')) ||
-        (language === 'html' && String(children).startsWith('<svg')) ? (
+          (language === 'text' && String(children).startsWith('<svg')) ||
+          (language === 'xml' && String(children).startsWith('<svg')) ||
+          (language === 'html' && String(children).startsWith('<svg')) ? (
           <SVGPreview xmlCode={String(children)} className="max-w-sm" generating={generating} />
         ) : null}
       </>
@@ -503,11 +516,11 @@ const BlockCode = memo(
               background: 'transparent !important',
               ...(generating && needCollapse && collapsed
                 ? {
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                  }
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                }
                 : {}),
             }}
             codeTagProps={{

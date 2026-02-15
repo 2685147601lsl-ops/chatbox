@@ -928,8 +928,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                 className={cn(
                   'shrink-0 mb-1',
                   !generating &&
-                    (disableSubmit || isPreprocessing || isSubmitting || isCompactionRunning) &&
-                    'disabled:!opacity-100 !text-white'
+                  (disableSubmit || isPreprocessing || isSubmitting || isCompactionRunning) &&
+                  'disabled:!opacity-100 !text-white'
                 )}
                 style={
                   !generating && (disableSubmit || isPreprocessing || isSubmitting || isCompactionRunning)
@@ -1040,60 +1040,27 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   t={t}
                 />
 
-                {featureFlags.mcp && (
-                  <MCPMenu>
-                    {(enabledTools) => (
-                      <UnstyledButton className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors">
-                        <IconHammer
-                          size={toolbarIconSize}
-                          strokeWidth={1.8}
-                          className={
-                            enabledTools > 0
-                              ? 'text-[var(--chatbox-tint-brand)]'
-                              : 'text-[var(--chatbox-tint-secondary)]'
-                          }
-                        />
-                        {enabledTools > 0 && (
-                          <Text size="xs" className="text-[var(--chatbox-tint-brand)]">
-                            {enabledTools}
-                          </Text>
-                        )}
-                      </UnstyledButton>
-                    )}
-                  </MCPMenu>
-                )}
-
-                {featureFlags.knowledgeBase && !isSmallScreen && (
-                  <KnowledgeBaseMenu currentKnowledgeBaseId={knowledgeBase?.id} onSelect={handleKnowledgeBaseSelect}>
+                <MCPMenu sessionId={currentSessionId || 'new'}>
+                  {(enabledToolsCount) => (
                     <UnstyledButton className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors">
-                      <IconVocabulary
+                      <IconHammer
                         size={toolbarIconSize}
                         strokeWidth={1.8}
                         className={
-                          knowledgeBase ? 'text-[var(--chatbox-tint-brand)]' : 'text-[var(--chatbox-tint-secondary)]'
+                          enabledToolsCount > 0
+                            ? 'text-[var(--chatbox-tint-brand)]'
+                            : 'text-[var(--chatbox-tint-secondary)]'
                         }
                       />
+                      {enabledToolsCount > 0 && (
+                        <Text size="xs" className="text-[var(--chatbox-tint-brand)] font-bold">
+                          {enabledToolsCount}
+                        </Text>
+                      )}
                     </UnstyledButton>
-                  </KnowledgeBaseMenu>
-                )}
+                  )}
+                </MCPMenu>
 
-                <Tooltip label={t('Web Search')} position="top" withArrow disabled={isSmallScreen}>
-                  <UnstyledButton
-                    onClick={() => {
-                      setWebBrowsingMode(!webBrowsingMode)
-                      dom.focusMessageInput()
-                    }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors"
-                  >
-                    <IconWorldWww
-                      size={toolbarIconSize}
-                      strokeWidth={1.8}
-                      className={
-                        webBrowsingMode ? 'text-[var(--chatbox-tint-brand)]' : 'text-[var(--chatbox-tint-secondary)]'
-                      }
-                    />
-                  </UnstyledButton>
-                </Tooltip>
 
                 {!isSmallScreen &&
                   (showRollbackThreadButton ? (
@@ -1198,9 +1165,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   <Flex
                     align="center"
                     gap="2"
-                    className={`text-xs cursor-pointer hover:text-chatbox-tint-secondary transition-colors px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] ${
-                      tokenPercentage && tokenPercentage > 80 ? 'text-red-500' : 'text-chatbox-tint-tertiary'
-                    }`}
+                    className={`text-xs cursor-pointer hover:text-chatbox-tint-secondary transition-colors px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] ${tokenPercentage && tokenPercentage > 80 ? 'text-red-500' : 'text-chatbox-tint-tertiary'
+                      }`}
                   >
                     <ScalableIcon icon={IconArrowUp} size={14} />
                     {isCalculating && <Loader size={10} />}

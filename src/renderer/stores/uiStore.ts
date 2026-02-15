@@ -44,8 +44,28 @@ export const uiStore = createStore(
         widthFull: false, // Stored UI preference
         showCopilotsInNewSession: false,
         sidebarWidth: null as number | null, // Custom sidebar width, null means use default
+        inputBoxMcpModeMap: {} as Record<string, 'auto' | 'manual' | 'disabled' | undefined>,
+        inputBoxForceToolsMap: {} as Record<string, string[] | undefined>,
       },
       (set, get) => ({
+        // ... previous helper methods ...
+        setInputBoxMcpMode: (sessionId: string, mode: 'auto' | 'manual' | 'disabled') => {
+          set((state) => ({
+            inputBoxMcpModeMap: {
+              ...state.inputBoxMcpModeMap,
+              [sessionId]: mode,
+            },
+          }))
+        },
+        setInputBoxForceTools: (sessionId: string, tools: string[]) => {
+          set((state) => ({
+            inputBoxForceToolsMap: {
+              ...state.inputBoxForceToolsMap,
+              [sessionId]: tools,
+            },
+          }))
+        },
+
         addToast: (content: string, duration?: number) => {
           const newToast = { id: `toast:${uuidv4()}`, content, duration }
           set((state) => ({
@@ -208,7 +228,10 @@ export const uiStore = createStore(
         showCopilotsInNewSession: state.showCopilotsInNewSession,
         sidebarWidth: state.sidebarWidth,
         sessionWebBrowsingMap: state.sessionWebBrowsingMap,
+        inputBoxMcpModeMap: state.inputBoxMcpModeMap,
+        inputBoxForceToolsMap: state.inputBoxForceToolsMap,
       }),
+
       storage: safeStorage,
     }
   )

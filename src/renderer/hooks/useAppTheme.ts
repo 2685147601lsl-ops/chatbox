@@ -64,12 +64,12 @@ export function getThemeDesign(realTheme: 'light' | 'dark', fontSize: number, la
       ...(realTheme === 'light'
         ? {}
         : {
-            // MUI 内部无法处理 css 变量，需要使用具体颜色值
-            background: {
-              default: '#242424',
-              paper: '#242424',
-            },
-          }),
+          // MUI 内部无法处理 css 变量，需要使用具体颜色值
+          background: {
+            default: '#242424',
+            paper: '#242424',
+          },
+        }),
     },
     components: {
       MuiSnackbarContent: {
@@ -86,8 +86,8 @@ export function getThemeDesign(realTheme: 'light' | 'dark', fontSize: number, la
       // so a smaller fontsize may be appropriate.
       ...(language === 'ar'
         ? {
-            fontFamily: 'Cairo, Arial, sans-serif',
-          }
+          fontFamily: 'Cairo, Arial, sans-serif',
+        }
         : {}),
       fontSize: (fontSize * 14) / 16,
     },

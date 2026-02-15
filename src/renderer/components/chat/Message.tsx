@@ -47,10 +47,14 @@ import { isContainRenderableCode, MessageArtifact } from '../Artifact'
 import { AssistantAvatar, SystemAvatar, UserAvatar } from '../common/Avatar'
 import { ScalableIcon } from '../common/ScalableIcon'
 import Loading from '../icons/Loading'
-import { ReasoningContentUI, ToolCallPartUI } from '../message-parts/ToolCallPartUI'
+import { ToolCallPartUI } from '../message-parts/ToolCallPartUI'
 import { MessageAttachmentGrid } from './MessageAttachmentGrid'
 import MessageErrTips from './MessageErrTips'
 import MessageStatuses from './MessageLoading'
+import { ReasoningBlock } from '../message-parts/ReasoningBlock'
+import { ToolCallGroup } from '../message-parts/ToolCallGroup'
+
+type MessageContentPart = Message['contentParts'][number]
 
 interface Props {
   id?: string
@@ -98,6 +102,12 @@ const _Message: FC<Props> = (props) => {
   const [previewArtifact, setPreviewArtifact] = useState(autoPreviewArtifacts)
   const [shouldThrowError, setShouldThrowError] = useState(false)
 
+  const { data: sessionData } = useQuery({
+    queryKey: ['session', sessionId],
+    queryFn: () => getSession(sessionId),
+  })
+  const sessionSettings = sessionData?.settings
+
   const contentLength = useMemo(() => {
     return getMessageText(msg).length
   }, [msg])
@@ -143,13 +153,13 @@ const _Message: FC<Props> = (props) => {
   // 复制特定 reasoning 内容
   const onCopyReasoningContent =
     (content: string): MouseEventHandler<HTMLButtonElement> =>
-    (e) => {
-      e.stopPropagation()
-      if (content) {
-        copyToClipboard(content)
-        toastActions.add(t('copied to clipboard'))
+      (e) => {
+        e.stopPropagation()
+        if (content) {
+          copyToClipboard(content)
+          toastActions.add(t('copied to clipboard'))
+        }
       }
-    }
 
   const onReport = useCallback(async () => {
     await NiceModal.show('report-content', { contentId: getMessageText(msg) || msg.id })
@@ -258,36 +268,36 @@ const _Message: FC<Props> = (props) => {
     () => [
       ...(isSamllScreen
         ? [
-            !msg.generating &&
-              msg.role === 'assistant' && {
-                text: t('Reply Again'),
-                icon: IconReload,
-                onClick: handleRefresh,
-              },
-            msg.role !== 'assistant' && {
-              text: t('Reply Again Below'),
-              icon: IconArrowDown,
-              onClick: onGenerateMore,
-            },
-            !msg.model?.startsWith('Chatbox-AI') &&
-              !(msg.role === 'assistant' && props.sessionType === 'picture') && {
-                text: t('edit'),
-                icon: IconPencil,
-                onClick: onEditClick,
-              },
-            !(props.sessionType === 'picture' && msg.role === 'assistant') && {
-              text: t('copy'),
-              icon: IconCopy,
-              onClick: onCopyMsg,
-            },
-            !msg.generating &&
-              props.sessionType === 'picture' &&
-              msg.role === 'assistant' && {
-                text: t('Generate More Images Below'),
-                icon: IconPhotoPlus,
-                onClick: onGenerateMore,
-              },
-          ].filter((i) => !!i)
+          !msg.generating &&
+          msg.role === 'assistant' && {
+            text: t('Reply Again'),
+            icon: IconReload,
+            onClick: handleRefresh,
+          },
+          msg.role !== 'assistant' && {
+            text: t('Reply Again Below'),
+            icon: IconArrowDown,
+            onClick: onGenerateMore,
+          },
+          !msg.model?.startsWith('Chatbox-AI') &&
+          !(msg.role === 'assistant' && props.sessionType === 'picture') && {
+            text: t('edit'),
+            icon: IconPencil,
+            onClick: onEditClick,
+          },
+          !(props.sessionType === 'picture' && msg.role === 'assistant') && {
+            text: t('copy'),
+            icon: IconCopy,
+            onClick: onCopyMsg,
+          },
+          !msg.generating &&
+          props.sessionType === 'picture' &&
+          msg.role === 'assistant' && {
+            text: t('Generate More Images Below'),
+            icon: IconPhotoPlus,
+            onClick: onGenerateMore,
+          },
+        ].filter((i) => !!i)
         : []),
       {
         text: t('quote'),
@@ -297,27 +307,27 @@ const _Message: FC<Props> = (props) => {
       { divider: true },
       ...(msg.role === 'assistant' && platform.type === 'mobile'
         ? [
-            {
-              text: t('report'),
-              icon: IconMessageReport,
-              onClick: onReport,
-            },
-          ]
+          {
+            text: t('report'),
+            icon: IconMessageReport,
+            onClick: onReport,
+          },
+        ]
         : []),
       // 开发环境添加测试错误按钮
       ...(process.env.NODE_ENV === 'development'
         ? [
-            // {
-            //   text: 'Trigger Error (Test)',
-            //   icon: IconBug,
-            //   onClick: onTriggerError,
-            // },
-            {
-              text: t('View Message JSON'),
-              icon: IconCode,
-              onClick: onViewMessageJson,
-            },
-          ]
+          // {
+          //   text: 'Trigger Error (Test)',
+          //   icon: IconBug,
+          //   onClick: onTriggerError,
+          // },
+          {
+            text: t('View Message JSON'),
+            icon: IconCode,
+            onClick: onViewMessageJson,
+          },
+        ]
         : []),
       {
         doubleCheck: true,
@@ -405,8 +415,8 @@ const _Message: FC<Props> = (props) => {
                 className={cn('msg-content', { 'msg-content-small': small })}
                 sx={small ? { fontSize: theme.typography.body2.fontSize } : {}}
               >
-                {msg.reasoningContent && (
-                  <ReasoningContentUI message={msg} onCopyReasoningContent={onCopyReasoningContent} />
+                {msg.reasoningContent && (sessionSettings?.reasoningMode !== 'disabled') && (
+                  <ReasoningBlock message={msg} onCopyReasoningContent={onCopyReasoningContent} />
                 )}
                 {
                   // 这里的空行仅仅是为了在只发送文件时消息气泡的美观
@@ -415,95 +425,128 @@ const _Message: FC<Props> = (props) => {
                 }
                 {contentParts && contentParts.length > 0 && (
                   <div>
-                    {contentParts.map((item, index) =>
-                      item.type === 'reasoning' ? (
-                        <div key={`reasoning-${msg.id}-${index}`}>
-                          <ReasoningContentUI
-                            message={msg}
-                            part={item}
-                            onCopyReasoningContent={onCopyReasoningContent}
-                          />
-                        </div>
-                      ) : item.type === 'text' ? (
-                        <div key={`text-${msg.id}-${index}`}>
-                          {enableMarkdownRendering && !isCollapsed ? (
-                            <Markdown
-                              uniqueId={`${msg.id}-${index}`}
-                              enableLaTeXRendering={enableLaTeXRendering}
-                              enableMermaidRendering={enableMermaidRendering}
-                              generating={msg.generating}
-                            >
-                              {item.text || ''}
-                            </Markdown>
-                          ) : (
-                            <div className="break-words whitespace-pre-line">
-                              {needCollapse && isCollapsed ? `${item.text.slice(0, collapseThreshold)}...` : item.text}
-                              {needCollapse && isCollapsed && CollapseButton}
-                            </div>
-                          )}
-                        </div>
-                      ) : item.type === 'info' ? (
-                        <Flex key={`info-${item.text}`} className="mb-2 ">
-                          <Flex
-                            className="bg-chatbox-background-brand-secondary border-0 border-l-2 border-solid border-chatbox-tint-brand rounded-r-md"
-                            align="center"
-                            gap="xxs"
-                            px="xs"
-                          >
-                            <ScalableIcon
-                              icon={IconInfoCircle}
-                              size={16}
-                              className="flex-none text-chatbox-tint-brand"
-                            />
+                    {(() => {
+                      const groupedParts: (MessageContentPart | { type: 'tool-group'; parts: MessageToolCallPart[] })[] = []
+                      let currentToolGroup: MessageToolCallPart[] = []
 
-                            <Text size="xs" c="chatbox-brand">
-                              {item.text}
-                            </Text>
-                          </Flex>
-                        </Flex>
-                      ) : item.type === 'image' ? (
-                        props.sessionType !== 'picture' && (
-                          <div key={`image-${item.storageKey}`} className="mt-2">
-                            <PictureGallery
-                              key={`image-${item.storageKey}`}
-                              pictures={[item]}
-                              compact={msg.role === 'user'}
-                            />
-                            {item.ocrResult && (
-                              <div
-                                className="my-2 p-2 bg-chatbox-background-brand-secondary rounded-md cursor-pointer hover:bg-chatbox-background-brand-secondary-hover transition-colors"
-                                onClick={async (e) => {
-                                  e.stopPropagation()
-                                  await NiceModal.show('content-viewer', {
-                                    title: t('OCR Text Content'),
-                                    content: item.ocrResult,
-                                  })
-                                }}
+                      contentParts.forEach((part) => {
+                        if (part.type === 'tool-call') {
+                          currentToolGroup.push(part)
+                        } else {
+                          if (currentToolGroup.length > 0) {
+                            groupedParts.push({ type: 'tool-group', parts: [...currentToolGroup] })
+                            currentToolGroup = []
+                          }
+                          groupedParts.push(part)
+                        }
+                      })
+                      if (currentToolGroup.length > 0) {
+                        groupedParts.push({ type: 'tool-group', parts: [...currentToolGroup] })
+                      }
+
+                      return groupedParts.map((item, index) => {
+                        if (item.type === 'tool-group') {
+                          return <div key={`tool-group-${index}`}><ToolCallGroup parts={item.parts} /></div>
+                        }
+                        const part = item as MessageContentPart
+
+                        return part.type === 'reasoning' ? (
+                          (sessionSettings?.reasoningMode !== 'disabled') && (
+                            <div key={`reasoning-${msg.id}-${index}`}>
+                              <ReasoningBlock
+                                message={msg}
+                                part={part}
+                                onCopyReasoningContent={onCopyReasoningContent}
+                              />
+                            </div>
+                          )
+                        ) : part.type === 'text' ? (
+                          <div key={`text-${msg.id}-${index}`}>
+                            {enableMarkdownRendering && !isCollapsed ? (
+                              <Markdown
+                                uniqueId={`${msg.id}-${index}`}
+                                enableLaTeXRendering={enableLaTeXRendering}
+                                enableMermaidRendering={enableMermaidRendering}
+                                generating={msg.generating}
                               >
-                                <Typography variant="caption" className="text-gray-600 dark:text-gray-400 block mb-1">
-                                  {t('OCR Text')} ({item.ocrResult.length} {t('characters')})
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  className="line-clamp-2 text-gray-700 dark:text-gray-300"
-                                  title={item.ocrResult}
-                                >
-                                  {item.ocrResult}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  className="text-blue-500 hover:text-blue-600 mt-1 inline-block"
-                                >
-                                  {t('Click to view full text')}
-                                </Typography>
+                                {part.text || ''}
+                              </Markdown>
+                            ) : (
+                              <div className="break-words whitespace-pre-line">
+                                {needCollapse && isCollapsed ? `${part.text.slice(0, collapseThreshold)}...` : part.text}
+                                {needCollapse && isCollapsed && CollapseButton}
                               </div>
                             )}
                           </div>
-                        )
-                      ) : item.type === 'tool-call' ? (
-                        <ToolCallPartUI key={item.toolCallId} part={item as MessageToolCallPart} />
-                      ) : null
-                    )}
+                        ) : part.type === 'info' ? (
+                          <Flex key={`info-${part.text}`} className="mb-2 ">
+                            <Flex
+                              className="bg-chatbox-background-brand-secondary border-0 border-l-2 border-solid border-chatbox-tint-brand rounded-r-md"
+                              align="center"
+                              gap="xxs"
+                              px="xs"
+                            >
+                              <ScalableIcon
+                                icon={IconInfoCircle}
+                                size={16}
+                                className="flex-none text-chatbox-tint-brand"
+                              />
+
+                              <Text size="xs" c="chatbox-brand">
+                                {part.text}
+                              </Text>
+                            </Flex>
+                          </Flex>
+                        ) : part.type === 'image' ? (
+                          props.sessionType !== 'picture' && (
+                            <div key={`image-${part.storageKey}`} className="mt-2">
+                              <PictureGallery
+                                key={`image-${part.storageKey}`}
+                                pictures={[part]}
+                                compact={msg.role === 'user'}
+                              />
+                              {part.ocrResult && (
+                                <div
+                                  className="my-2 p-2 bg-chatbox-background-brand-secondary rounded-md cursor-pointer hover:bg-chatbox-background-brand-secondary-hover transition-colors"
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    await NiceModal.show('content-viewer', {
+                                      title: t('OCR Text Content'),
+                                      content: part.ocrResult,
+                                    })
+                                  }}
+                                >
+                                  <Typography variant="caption" className="text-gray-600 dark:text-gray-400 block mb-1">
+                                    {t('OCR Text')} ({part.ocrResult.length} {t('characters')})
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    className="line-clamp-2 text-gray-700 dark:text-gray-300"
+                                    title={part.ocrResult}
+                                  >
+                                    {part.ocrResult}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    className="text-blue-500 hover:text-blue-600 mt-1 inline-block"
+                                  >
+                                    {t('Click to view full text')}
+                                  </Typography>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        ) : part.type === 'tool-call' ? (
+                          <div key={`tool-call-${part.toolCallId}-${index}`}>
+                            <ToolCallPartUI part={part} />
+                          </div>
+                        ) : part.type === 'video' ? (
+                          <div key={`video-${part.storageKey || part.url}`} className="mt-2">
+                            <VideoRenderer part={part} />
+                          </div>
+                        ) : null
+                      })
+                    })()}
                   </div>
                 )}
               </Box>
@@ -555,10 +598,10 @@ const _Message: FC<Props> = (props) => {
                   {
                     // Chatbox-AI 模型不支持编辑消息
                     !msg.model?.startsWith('Chatbox-AI') &&
-                      // 图片会话中，助手消息无需编辑
-                      !(msg.role === 'assistant' && props.sessionType === 'picture') && (
-                        <MessageActionIcon icon={IconPencil} tooltip={t('edit')} onClick={onEditClick} />
-                      )
+                    // 图片会话中，助手消息无需编辑
+                    !(msg.role === 'assistant' && props.sessionType === 'picture') && (
+                      <MessageActionIcon icon={IconPencil} tooltip={t('edit')} onClick={onEditClick} />
+                    )
                   }
 
                   {!(props.sessionType === 'picture' && msg.role === 'assistant') && (
@@ -649,25 +692,25 @@ const PictureGallery = memo(({ pictures, compact, onReport }: PictureGalleryProp
     ],
     onReport
       ? [
-          {
-            name: 'report-button',
-            ariaLabel: 'Report',
-            order: 8,
-            isButton: true,
-            html: {
-              isCustomSVG: true,
-              inner:
-                '<path d="M 16 6 A 10 10 0 0 1 16 26 L 16 24 A 8 8 0 0 0 16 8 L 16 6 A 10 10 0 0 0 16 26 L 16 24 A 8 8 0 0 1 16 8 M 15 11 A 1 1 0 0 1 17 11 L 17 16 A 1 1 0 0 1 15 16 M 16 19 A 1.5 1.5 0 0 1 16 22 A 1.5 1.5 0 0 1 16 19 Z" id="pswp__icn-report">',
-              outlineID: 'pswp__icn-report',
-            },
-            appendTo: 'bar',
-            onClick: (_e, _el, pswp) => {
-              const picture = pictures[pswp.currIndex]
-              pswp.close()
-              onReport(picture)
-            },
+        {
+          name: 'report-button',
+          ariaLabel: 'Report',
+          order: 8,
+          isButton: true,
+          html: {
+            isCustomSVG: true,
+            inner:
+              '<path d="M 16 6 A 10 10 0 0 1 16 26 L 16 24 A 8 8 0 0 0 16 8 L 16 6 A 10 10 0 0 0 16 26 L 16 24 A 8 8 0 0 1 16 8 M 15 11 A 1 1 0 0 1 17 11 L 17 16 A 1 1 0 0 1 15 16 M 16 19 A 1.5 1.5 0 0 1 16 22 A 1.5 1.5 0 0 1 16 19 Z" id="pswp__icn-report">',
+            outlineID: 'pswp__icn-report',
           },
-        ]
+          appendTo: 'bar',
+          onClick: (_e, _el, pswp) => {
+            const picture = pictures[pswp.currIndex]
+            pswp.close()
+            onReport(picture)
+          },
+        },
+      ]
       : []
   )
   return (
@@ -732,6 +775,32 @@ const ImageInStorageGalleryItem = ({ storageKey, height }: { storageKey: string;
       )}
     </GalleryItem>
   ) : null
+}
+
+const VideoRenderer = ({ part }: { part: Message['contentParts'][number] & { type: 'video' } }) => {
+  const { data: videoUrl } = useQuery({
+    queryKey: ['video-src', part.storageKey || part.url],
+    queryFn: async () => {
+      if (part.storageKey) {
+        const blob = await storage.getBlob(part.storageKey)
+        if (!blob) return null
+        return blob.startsWith('data:') ? blob : `data:video/mp4;base64,${blob}`
+      }
+      return part.url
+    },
+    staleTime: Infinity,
+  })
+
+  if (!videoUrl) return null
+
+  return (
+    <video
+      src={videoUrl}
+      controls
+      className="max-w-full rounded-lg shadow-sm"
+      style={{ maxHeight: '400px' }}
+    />
+  )
 }
 
 export const MessageActionIcon = forwardRef<

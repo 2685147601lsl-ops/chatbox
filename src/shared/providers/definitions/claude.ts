@@ -43,6 +43,7 @@ export const claudeProvider = defineProvider({
         topP: config.settings.topP,
         maxOutputTokens: config.settings.maxTokens,
         stream: config.settings.stream,
+        aiProvider: config.settings.provider,
       },
       config.dependencies
     )

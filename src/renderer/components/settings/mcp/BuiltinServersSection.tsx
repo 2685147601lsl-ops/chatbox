@@ -35,7 +35,7 @@ const ServerCard: FC<{
 export const BuiltinServersSection: FC = () => {
   const { t } = useTranslation()
   const mcp = useMcpSettings()
-  const isPremium = useAutoValidate()
+  const isPremium = true // Keep enabled for own builtin candidates // Experiment: enable for all users
   const onEnabledChange = useToggleMCPServer()
   return (
     <>

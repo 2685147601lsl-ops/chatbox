@@ -206,6 +206,9 @@ export async function generate(
           }
         }
 
+        const mcpMode = uiStore.getState().inputBoxMcpModeMap[sessionId] || 'auto'
+        const forcedTools = uiStore.getState().inputBoxForceToolsMap[sessionId] || []
+
         const { result } = await streamText(model, {
           sessionId: session.id,
           messages: promptMsgs,
@@ -220,7 +223,11 @@ export async function generate(
           providerOptions: settings.providerOptions,
           knowledgeBase,
           webBrowsing,
+          mcpMode,
+          forcedTools,
+          reasoningMode: settings.reasoningMode,
         })
+
         targetMsg = {
           ...targetMsg,
           generating: false,
@@ -435,8 +442,12 @@ export async function genMessageContext(
     const keys = Array.from(allStorageKeys)
     const contents = await Promise.all(keys.map((key) => storageGetBlob(key)))
     keys.forEach((key, index) => {
-      blobContents.set(key, contents[index])
+      const content = contents[index]
+      if (content !== undefined && content !== null) {
+        blobContents.set(key, content)
+      }
     })
+
   }
 
   const head = contextMessages[0]?.role === 'system' ? contextMessages[0] : undefined

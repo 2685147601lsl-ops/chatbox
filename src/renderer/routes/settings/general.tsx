@@ -168,23 +168,7 @@ export function RouteComponent() {
 
       <Divider />
 
-      {/* Error Reporting */}
-      <Stack gap="md">
-        <Stack gap="xxs">
-          <Title order={5}>{t('Error Reporting')}</Title>
-          <Text c="chatbox-tertiary">
-            {t(
-              'Chatbox respects your privacy and only uploads anonymous error data and events when necessary. You can change your preferences at any time in the settings.'
-            )}
-          </Text>
-        </Stack>
 
-        <Checkbox
-          label={t('Enable optional anonymous reporting of crash and event data')}
-          checked={settings.allowReportingAndTracking}
-          onChange={(e) => setSettings({ allowReportingAndTracking: e.target.checked })}
-        />
-      </Stack>
 
       {/* others */}
       {platform.type === 'desktop' && (
@@ -308,8 +292,8 @@ const ImportExportDataSection = () => {
   const onExport = async () => {
     const data = await storage.getAll()
     delete data[StorageKey.Configs] // 不导出 uuid
-    ;(data[StorageKey.Settings] as Settings).licenseDetail = undefined // 不导出license认证数据
-    ;(data[StorageKey.Settings] as Settings).licenseInstances = undefined // 不导出license设备数据，导入数据的新设备也应该计入设备数
+      ; (data[StorageKey.Settings] as Settings).licenseDetail = undefined // 不导出license认证数据
+      ; (data[StorageKey.Settings] as Settings).licenseInstances = undefined // 不导出license设备数据，导入数据的新设备也应该计入设备数
     if (!exportItems.includes(ExportDataItem.Key)) {
       delete (data[StorageKey.Settings] as Settings).licenseKey
       data[StorageKey.Settings].providers = mapValues(
@@ -439,7 +423,6 @@ const ImportExportDataSection = () => {
           { label: t('Settings'), value: ExportDataItem.Setting },
           { label: t('API KEY & License'), value: ExportDataItem.Key },
           { label: t('Chat History'), value: ExportDataItem.Conversations },
-          { label: t('My Copilots'), value: ExportDataItem.Copilot },
         ].map(({ label, value }) => (
           <Checkbox
             key={value}

@@ -75,6 +75,7 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
   public name = 'AI SDK Model'
   public injectDefaultMetadata = true
   public modelId = ''
+  public aiProvider?: string
 
   public isSupportToolUse() {
     return this.options.model.capabilities?.includes('tool_use') || false
@@ -91,10 +92,11 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
   }
 
   public constructor(
-    public options: { model: ProviderModelInfo; stream?: boolean },
+    public options: { model: ProviderModelInfo; stream?: boolean; aiProvider?: string },
     protected dependencies: ModelDependencies
   ) {
     this.modelId = options.model.modelId
+    this.aiProvider = options.aiProvider
   }
 
   protected abstract getProvider(
@@ -253,10 +255,10 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
       const serializedError =
         toolError.error instanceof Error
           ? {
-              name: toolError.error.name,
-              message: toolError.error.message,
-              stack: toolError.error.stack,
-            }
+            name: toolError.error.name,
+            message: toolError.error.message,
+            stack: toolError.error.stack,
+          }
           : toolError.error
       const mappedResult: ToolExecutionResult = {
         toolCallId: toolError.toolCallId,
@@ -485,10 +487,15 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
     options: CallChatCompletionOptions<T>,
     callSettings: CallSettings
   ): Promise<StreamTextResult> {
+    const maxSteps = options.tools && Object.keys(options.tools).length > 0
+      ? (options.maxSteps || 10)
+      : 1
+    const toolNames = options.tools ? Object.keys(options.tools) : []
+    console.debug('[AI-SDK] streamText with', toolNames.length, 'tools:', toolNames, 'maxSteps:', maxSteps)
     const result = streamText({
       model,
       messages: coreMessages,
-      stopWhen: stepCountIs(options.maxSteps || Number.MAX_SAFE_INTEGER),
+      stopWhen: stepCountIs(maxSteps),
       tools: options.tools,
       abortSignal: options.signal,
       ...callSettings,

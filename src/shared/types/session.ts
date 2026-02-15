@@ -1,6 +1,6 @@
 import type { LanguageModelUsage } from 'ai'
 import { z } from 'zod'
-import { SessionSettingsSchema } from '../types/settings'
+import { SessionSettingsSchema } from './settings'
 import { ModelProviderEnum } from './provider'
 
 // Re-export for backward compatibility
@@ -117,12 +117,19 @@ export const MessageToolCallPartSchema = z.object({
   result: z.unknown().optional(),
 })
 
+export const MessageVideoPartSchema = z.object({
+  type: z.literal('video'),
+  storageKey: z.string().optional(),
+  url: z.string().optional(),
+})
+
 export const MessageContentPartSchema = z.discriminatedUnion('type', [
   MessageTextPartSchema,
   MessageImagePartSchema,
   MessageInfoPartSchema,
   MessageReasoningPartSchema,
   MessageToolCallPartSchema,
+  MessageVideoPartSchema,
 ])
 
 export const MessageContentPartsSchema = z.array(MessageContentPartSchema)
@@ -296,6 +303,7 @@ export type MessageToolCallPart<Args = unknown, Result = unknown> = z.infer<type
   args: Args
   result?: Result
 }
+export type MessageVideoPart = z.infer<typeof MessageVideoPartSchema>
 export type MessageContentParts = z.infer<typeof MessageContentPartsSchema>
 export type StreamTextResult = z.infer<typeof StreamTextResultSchema>
 export type ToolUseScope = z.infer<typeof ToolUseScopeSchema>

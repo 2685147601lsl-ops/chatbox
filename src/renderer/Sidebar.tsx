@@ -125,7 +125,6 @@ export default function Sidebar() {
         language === 'ar' ? { sx: { direction: 'rtl', overflowY: 'initial' } } : { sx: { overflowY: 'initial' } }
       }
       disableSwipeToOpen={CHATBOX_BUILD_PLATFORM !== 'ios'} // 只在iOS设备上启用SwipeToOpen
-      disableEnforceFocus={true} // 关闭 focus trap，避免在侧边栏打开时弹出的 modal 中 input 无法点击
     >
       <Stack
         h="100%"
@@ -172,22 +171,7 @@ export default function Sidebar() {
               {t('Create Image')}
             </Button>
           </Stack>
-          <NavLink
-            c="chatbox-secondary"
-            className="rounded"
-            label={t('My Copilots')}
-            leftSection={<ScalableIcon icon={IconMessageChatbot} size={20} />}
-            onClick={() => {
-              navigate({
-                to: '/copilots',
-              })
-              if (isSmallScreen) {
-                setShowSidebar(false)
-              }
-            }}
-            variant="light"
-            p="xs"
-          />
+
           <NavLink
             c="chatbox-secondary"
             className="rounded"
@@ -220,29 +204,7 @@ export default function Sidebar() {
               p="xs"
             />
           )}
-          <NavLink
-            c="chatbox-tertiary"
-            className="rounded"
-            label={
-              <Flex align="center" gap={6}>
-                <span>{`${t('About')} ${/\d/.test(versionHook.version) ? `(${versionHook.version})` : ''}`}</span>
-                {CHATBOX_BUILD_PLATFORM === 'android' && versionHook.needCheckUpdate && (
-                  <Box w={8} h={8} miw={8} bg="chatbox-brand" style={{ borderRadius: '50%' }} />
-                )}
-              </Flex>
-            }
-            leftSection={<ScalableIcon icon={IconInfoCircle} size={20} />}
-            onClick={() => {
-              navigate({
-                to: '/about',
-              })
-              if (isSmallScreen) {
-                setShowSidebar(false)
-              }
-            }}
-            variant="light"
-            p="xs"
-          />
+
         </Stack>
         {!isSmallScreen && (
           <Box

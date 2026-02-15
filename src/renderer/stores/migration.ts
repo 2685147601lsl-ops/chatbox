@@ -231,19 +231,19 @@ async function migrate_0_to_1(dataStore: MigrateStore) {
 }
 
 async function migrate_1_to_2(dataStore: MigrateStore) {
-  const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
-  const lang = await platform.getLocale()
-  if (lang.startsWith('zh')) {
-    if (sessions.find((session) => session.id === imageCreatorSessionForCN.id)) {
-      return
-    }
-    await dataStore.setData(StorageKey.ChatSessions, [...sessions, imageCreatorSessionForCN])
-  } else {
-    if (sessions.find((session) => session.id === imageCreatorSessionForEN.id)) {
-      return
-    }
-    await dataStore.setData(StorageKey.ChatSessions, [...sessions, imageCreatorSessionForEN])
-  }
+  // const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
+  // const lang = await platform.getLocale()
+  // if (lang.startsWith('zh')) {
+  //   if (sessions.find((session) => session.id === imageCreatorSessionForCN.id)) {
+  //     return
+  //   }
+  //   await dataStore.setData(StorageKey.ChatSessions, [...sessions, imageCreatorSessionForCN])
+  // } else {
+  //   if (sessions.find((session) => session.id === imageCreatorSessionForEN.id)) {
+  //     return
+  //   }
+  //   await dataStore.setData(StorageKey.ChatSessions, [...sessions, imageCreatorSessionForEN])
+  // }
 }
 
 async function migrate_2_to_3(dataStore: MigrateStore) {
@@ -267,13 +267,13 @@ async function migrate_2_to_3(dataStore: MigrateStore) {
 }
 
 async function migrate_3_to_4(dataStore: MigrateStore) {
-  const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
-  const lang = await platform.getLocale()
-  const targetSession = lang.startsWith('zh') ? artifactSessionCN : artifactSessionEN
-  if (sessions.find((session) => session.id === targetSession.id)) {
-    return
-  }
-  await dataStore.setData(StorageKey.ChatSessions, [...sessions, targetSession])
+  // const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
+  // const lang = await platform.getLocale()
+  // const targetSession = lang.startsWith('zh') ? artifactSessionCN : artifactSessionEN
+  // if (sessions.find((session) => session.id === targetSession.id)) {
+  //   return
+  // }
+  // await dataStore.setData(StorageKey.ChatSessions, [...sessions, targetSession])
 }
 
 // 已经迁移到storage migration
@@ -297,13 +297,13 @@ async function migrate_4_to_5(dataStore: MigrateStore): Promise<boolean> {
 }
 
 async function migrate_5_to_6(dataStore: MigrateStore) {
-  const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
-  const lang = await platform.getLocale()
-  const targetSession = lang.startsWith('zh') ? mermaidSessionCN : mermaidSessionEN
-  if (sessions.find((session) => session.id === targetSession.id)) {
-    return
-  }
-  await dataStore.setData(StorageKey.ChatSessions, [...sessions, targetSession])
+  // const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
+  // const lang = await platform.getLocale()
+  // const targetSession = lang.startsWith('zh') ? mermaidSessionCN : mermaidSessionEN
+  // if (sessions.find((session) => session.id === targetSession.id)) {
+  //   return
+  // }
+  // await dataStore.setData(StorageKey.ChatSessions, [...sessions, targetSession])
 }
 
 // 针对 mobile 端，从 store 迁移至 sqlite
@@ -491,16 +491,16 @@ async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
           models:
             openaiCustomModel || openaiCustomModelOptions
               ? uniqBy(
-                  [
-                    ...(defaults.SystemProviders().find((p) => p.id === ModelProviderEnum.OpenAI)?.defaultSettings
-                      ?.models || []),
-                    ...(openaiCustomModel ? [{ modelId: openaiCustomModel }] : []),
-                    ...(openaiCustomModelOptions || []).map((o: string) => ({
-                      modelId: o,
-                    })),
-                  ],
-                  'modelId'
-                )
+                [
+                  ...(defaults.SystemProviders().find((p) => p.id === ModelProviderEnum.OpenAI)?.defaultSettings
+                    ?.models || []),
+                  ...(openaiCustomModel ? [{ modelId: openaiCustomModel }] : []),
+                  ...(openaiCustomModelOptions || []).map((o: string) => ({
+                    modelId: o,
+                  })),
+                ],
+                'modelId'
+              )
               : undefined,
         }
       }
@@ -657,22 +657,22 @@ async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
         session.settings =
           session.type === 'chat'
             ? {
-                provider: sessionProvider,
-                modelId,
-                maxContextMessageCount: oldSessionSettings.maxContextMessageCount ?? oldSettings.maxContextMessageCount,
-                temperature: oldSessionSettings.temperature ?? oldSettings.temperature,
-                topP: oldSessionSettings.topP ?? oldSettings.topP,
-              }
+              provider: sessionProvider,
+              modelId,
+              maxContextMessageCount: oldSessionSettings.maxContextMessageCount ?? oldSettings.maxContextMessageCount,
+              temperature: oldSessionSettings.temperature ?? oldSettings.temperature,
+              topP: oldSessionSettings.topP ?? oldSettings.topP,
+            }
             : {
-                provider: [ModelProviderEnum.ChatboxAI, ModelProviderEnum.OpenAI, ModelProviderEnum.Azure].includes(
-                  oldSettings.aiProvider
-                )
-                  ? oldSettings.aiProvider
-                  : ModelProviderEnum.ChatboxAI,
-                modelId: 'DALL-E-3',
-                imageGenerateNum: oldSessionSettings.imageGenerateNum ?? 3,
-                dalleStyle: oldSessionSettings.dalleStyle ?? 'vivid',
-              }
+              provider: [ModelProviderEnum.ChatboxAI, ModelProviderEnum.OpenAI, ModelProviderEnum.Azure].includes(
+                oldSettings.aiProvider
+              )
+                ? oldSettings.aiProvider
+                : ModelProviderEnum.ChatboxAI,
+              modelId: 'DALL-E-3',
+              imageGenerateNum: oldSessionSettings.imageGenerateNum ?? 3,
+              dalleStyle: oldSessionSettings.dalleStyle ?? 'vivid',
+            }
 
         sessionMap[StorageKeyGenerator.session(session.id)] = session
       }

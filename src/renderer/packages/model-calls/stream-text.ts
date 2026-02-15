@@ -36,6 +36,7 @@ import {
 import fileToolSet from './toolsets/file'
 import { getToolSet } from './toolsets/knowledge-base'
 import websearchToolSet, { parseLinkTool, webSearchTool } from './toolsets/web-search'
+import cherryStudioToolSet from './toolsets/cherry-studio'
 
 /**
  * 处理搜索结果并返回模型响应的通用函数
@@ -132,7 +133,11 @@ export async function streamText(
     providerOptions?: ProviderOptions
     knowledgeBase?: Pick<KnowledgeBase, 'id' | 'name'>
     webBrowsing?: boolean
+    mcpMode?: 'auto' | 'manual' | 'disabled'
+    forcedTools?: string[]
+    reasoningMode?: 'default' | 'enabled' | 'disabled'
   },
+
   signal?: AbortSignal
 ): Promise<{ result: StreamTextResult; coreMessages: ModelMessage[] }> {
   const { knowledgeBase, webBrowsing, sessionId } = params
@@ -293,16 +298,34 @@ export async function streamText(
     }
 
     // 4. construct tool set
-    let tools: ToolSet = {
-      ...mcpController.getAvailableTools(),
+    const { mcpMode = 'auto', forcedTools = [] } = params
+    let tools: ToolSet = {}
+
+    if (mcpMode !== 'disabled') {
+      const availableMcpTools = mcpController.getAvailableTools()
+      console.debug('[MCP] mode:', mcpMode, 'available tools:', Object.keys(availableMcpTools))
+      console.debug('[MCP] running servers:', Array.from(mcpController.servers.entries()).map(([id, s]) => ({ id, state: s.instance.status.state })))
+      if (mcpMode === 'auto') {
+        tools = { ...availableMcpTools }
+      } else if (mcpMode === 'manual') {
+        // In manual mode, we only use the tools explicitly forced by the user
+        for (const toolName of forcedTools) {
+          if (availableMcpTools[toolName]) {
+            tools[toolName] = availableMcpTools[toolName]
+          }
+        }
+      }
     }
+
     if (webBrowsing) {
       tools.web_search = webSearchTool
       if (settingActions.isPro()) {
         tools.parse_link = parseLinkTool
       }
     }
+
     if (kbToolSet) {
+      // Logic for KB tools could also be conditional, but usually they are managed by knowledgeBase toggle
       tools = {
         ...tools,
         ...kbToolSet.tools,
@@ -316,22 +339,53 @@ export async function streamText(
       }
     }
 
-    console.debug('tools', tools)
+    // If there are forced tools and the model supports toolChoice, we could set it.
+    // For now, we rely on filtering 'tools' to effectively force the choice if only one is provided.
+
+    console.debug('[streamText] final tools:', Object.keys(tools), 'mcpMode:', mcpMode)
+
+    // Apply reasoningMode to providerOptions
+    const providerOptions = { ...(params.providerOptions || {}) }
+    const { reasoningMode = 'default' } = params
+
+    if (reasoningMode !== 'default') {
+      if (model.aiProvider === ModelProviderEnum.Claude) {
+        providerOptions.claude = {
+          ...providerOptions.claude,
+          thinking: {
+            ...providerOptions.claude?.thinking,
+            type: reasoningMode === 'enabled' ? 'enabled' : 'disabled',
+            budgetTokens: providerOptions.claude?.thinking?.budgetTokens || 1024,
+          }
+        }
+      } else if (model.aiProvider === ModelProviderEnum.Gemini) {
+        providerOptions.google = {
+          ...providerOptions.google,
+          thinkingConfig: {
+            ...providerOptions.google?.thinkingConfig,
+            includeThoughts: reasoningMode === 'enabled',
+            thinkingBudget: providerOptions.google?.thinkingConfig?.thinkingBudget || 1024,
+          }
+        }
+      }
+    }
+
+    const finalTools = Object.keys(tools).length > 0 ? tools : undefined
 
     result = await model.chat(coreMessages, {
       sessionId,
       signal: controller.signal,
       onResultChange,
       onStatusChange: params.onStatusChange,
-      providerOptions: params.providerOptions,
-      tools,
-    })
+      providerOptions,
+      tools: finalTools,
+    } as any)
 
     return { result, coreMessages }
   } catch (err) {
     console.error(err)
     // if a cancellation is performed, do not throw an exception, otherwise the content will be overwritten.
-    if (controller.signal.aborted) {
+    if (controller.signal.aborted || (err as any)?.name === 'AbortError' || (err as any)?.message === 'The operation was aborted') {
       return { result, coreMessages }
     }
     throw err

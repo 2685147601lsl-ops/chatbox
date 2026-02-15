@@ -14,6 +14,7 @@ interface Options {
   topP?: number
   maxOutputTokens?: number
   stream?: boolean
+  aiProvider?: string
 }
 
 export default class Claude extends AbstractAISDKModel {

@@ -16,7 +16,7 @@ import {
   Checkbox,
   Combobox,
   colorsTuple,
-  createTheme,
+  createTheme as mantineCreateTheme,
   type DefaultMantineColor,
   Drawer,
   Input,
@@ -74,24 +74,24 @@ function Root() {
     // 通过定时器延迟启动，防止处理状态底层存储的异步加载前错误的初始数据
     const tid = setTimeout(() => {
       // biome-ignore lint/nursery/noFloatingPromises: inline call
-      ;(async () => {
+      ; (async () => {
         const remoteConfig = await remote
           .getRemoteConfig('setting_chatboxai_first')
           .catch(() => ({ setting_chatboxai_first: false }) as RemoteConfig)
         setRemoteConfig((conf) => ({ ...conf, ...remoteConfig }))
         // 是否需要弹出设置窗口
         initialized.current = true
-        if (settingActions.needEditSetting() && location.pathname !== '/settings/mcp') {
-          await NiceModal.show('welcome')
-          return
-        }
+        // if (settingActions.needEditSetting() && location.pathname !== '/settings/mcp') {
+        //   await NiceModal.show('welcome')
+        //   return
+        // }
         // 是否需要弹出关于窗口（更新后首次启动）
         // 目前仅在桌面版本更新后首次启动、且网络环境为"外网"的情况下才自动弹窗
-        const shouldShowAboutDialogWhenStartUp = await platform.shouldShowAboutDialogWhenStartUp()
-        if (shouldShowAboutDialogWhenStartUp && remoteConfig.setting_chatboxai_first) {
-          setOpenAboutDialog(true)
-          return
-        }
+        // const shouldShowAboutDialogWhenStartUp = await platform.shouldShowAboutDialogWhenStartUp()
+        // if (shouldShowAboutDialogWhenStartUp && remoteConfig.setting_chatboxai_first) {
+        //   setOpenAboutDialog(true)
+        //   return
+        // }
       })()
     }, 2000)
 
@@ -115,7 +115,7 @@ function Root() {
   }, [_theme])
 
   useEffect(() => {
-    ;(() => {
+    ; (() => {
       const { startupPage } = settingsStore.getState()
       const sid = JSON.parse(localStorage.getItem('_currentSessionIdCachedAtom') || '""') as string
       if (sid && startupPage === 'session') {
@@ -206,8 +206,8 @@ function Root() {
   )
 }
 
-const creteMantineTheme = (scale = 1) =>
-  createTheme({
+const createMantineTheme = (scale = 1) =>
+  mantineCreateTheme({
     /** Put your mantine theme override here */
     scale,
     primaryColor: 'chatbox-brand',
@@ -315,9 +315,9 @@ const creteMantineTheme = (scale = 1) =>
             '--input-height-sm': rem('32px'),
             ...(props.error
               ? {
-                  '--input-color': 'var(--chatbox-tint-error)',
-                  '--input-bd': 'var(--chatbox-tint-error)',
-                }
+                '--input-color': 'var(--chatbox-tint-error)',
+                '--input-bd': 'var(--chatbox-tint-error)',
+              }
               : {}),
           },
         }),
@@ -474,14 +474,14 @@ const creteMantineTheme = (scale = 1) =>
 export const Route = createRootRoute({
   component: () => {
     useI18nEffect()
-    premiumActions.useAutoValidate() // 每次启动都执行 license 检查，防止用户在lemonsqueezy管理页面中取消了当前设备的激活
+    // premiumActions.useAutoValidate() // 每次启动都执行 license 检查，防止用户在lemonsqueezy管理页面中取消了当前设备的激活
     useSystemLanguageWhenInit()
     useShortcut()
     const theme = useAppTheme()
     const _theme = useTheme()
     const fontSize = useSettingsStore((state) => state.fontSize)
     const scale = fontSize / 14
-    const mantineTheme = useMemo(() => creteMantineTheme(scale), [scale])
+    const mantineTheme = useMemo(() => createMantineTheme(scale), [scale])
 
     return (
       <MantineProvider

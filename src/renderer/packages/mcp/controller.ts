@@ -32,6 +32,13 @@ async function createClient(transportConfig: TransportConfig, name = 'chatbox-mc
     }
   }
   if (transportConfig.type === 'http') {
+    if (transportConfig.url.startsWith('local://')) {
+      // Local builtin server will be handled differently or as a mock
+      return {
+        tools: async () => ({}), // Placeholder, will be overridden in MCPServer
+        close: async () => { },
+      } as any
+    }
     try {
       const transport = new StreamableHTTPClientTransport(new URL(transportConfig.url), {
         requestInit: { headers: transportConfig.headers },
@@ -58,6 +65,7 @@ async function createClient(transportConfig: TransportConfig, name = 'chatbox-mc
       })
     }
   }
+
   throw new Error('Unknown transport type')
 }
 
@@ -85,6 +93,18 @@ export class MCPServer extends Emittery<{ status: MCPServerStatus }> {
     }
     this.status = { state: 'starting' }
     try {
+      if ('url' in this.transportConfig && this.transportConfig.url.startsWith('local://')) {
+        const { cherryBuiltinTools } = await import('./builtin-tools/cherry.js')
+        const serverId = this.transportConfig.url.replace('local://', '') // e.g., 'cherry/time'
+        // Handle both 'cherry/time' and '@cherry/time' formats
+        const tools = cherryBuiltinTools[serverId] || cherryBuiltinTools[`@${serverId}`]
+        if (tools) {
+          this.tools = tools
+          this.status = { state: 'running' }
+          return
+        }
+        throw new Error(`Local toolset not found: ${serverId}`)
+      }
       this.client = await createClient(this.transportConfig)
       this.tools = await this.client.tools()
     } catch (err) {
@@ -94,6 +114,7 @@ export class MCPServer extends Emittery<{ status: MCPServerStatus }> {
     }
     this.status = { state: 'running' }
   }
+
 
   async stop() {
     if (this.status.state !== 'running') {
@@ -106,7 +127,7 @@ export class MCPServer extends Emittery<{ status: MCPServerStatus }> {
   }
 
   getAvailableTools(): ToolSet {
-    if (!this.client || this.status.state !== 'running') {
+    if (this.status.state !== 'running') {
       return {}
     }
     return this.tools || {}
@@ -219,7 +240,7 @@ export const mcpController = {
 
 const SERVER_NAME_REGEX = /^[A-Za-z0-9_-]+$/
 
-function normalizeToolName(serverName: string, toolName: string) {
+export function normalizeToolName(serverName: string, toolName: string) {
   serverName = serverName.replace(/\s+/g, '_')
   if (SERVER_NAME_REGEX.test(serverName)) {
     return `mcp__${serverName.toLowerCase()}__${toolName}`

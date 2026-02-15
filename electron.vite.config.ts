@@ -61,28 +61,28 @@ export default defineConfig(({ mode }) => {
       plugins: [
         ...(isProduction
           ? [
-              visualizer({
-                filename: 'release/app/dist/main/stats.html',
-                open: false,
-                title: 'Main Process Dependency Analysis',
-              }),
-            ]
+            visualizer({
+              filename: 'release/app/dist/main/stats.html',
+              open: false,
+              title: 'Main Process Dependency Analysis',
+            }),
+          ]
           : [externalizeDepsPlugin()]),
         process.env.SENTRY_AUTH_TOKEN
           ? sentryVitePlugin({
-              authToken: process.env.SENTRY_AUTH_TOKEN,
-              org: 'sentry',
-              project: 'chatbox',
-              url: 'https://sentry.midway.run/',
-              release: {
-                name: inferredRelease,
-                ...(inferredDist ? { dist: inferredDist } : {}),
-              },
-              sourcemaps: {
-                assets: isProduction ? 'release/app/dist/main/**' : 'output/main/**',
-              },
-              telemetry: false,
-            })
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org: 'sentry',
+            project: 'chatbox',
+            url: 'https://sentry.midway.run/',
+            release: {
+              name: inferredRelease,
+              ...(inferredDist ? { dist: inferredDist } : {}),
+            },
+            sourcemaps: {
+              assets: isProduction ? 'release/app/dist/main/**' : 'output/main/**',
+            },
+            telemetry: false,
+          })
           : undefined,
       ].filter(Boolean),
       build: {
@@ -162,19 +162,19 @@ export default defineConfig(({ mode }) => {
         }),
         process.env.SENTRY_AUTH_TOKEN
           ? sentryVitePlugin({
-              authToken: process.env.SENTRY_AUTH_TOKEN,
-              org: 'sentry',
-              project: 'chatbox',
-              url: 'https://sentry.midway.run/',
-              release: {
-                name: inferredRelease,
-                ...(inferredDist ? { dist: inferredDist } : {}),
-              },
-              sourcemaps: {
-                assets: isProduction ? 'release/app/dist/renderer/**' : 'output/renderer/**',
-              },
-              telemetry: false,
-            })
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org: 'sentry',
+            project: 'chatbox',
+            url: 'https://sentry.midway.run/',
+            release: {
+              name: inferredRelease,
+              ...(inferredDist ? { dist: inferredDist } : {}),
+            },
+            sourcemaps: {
+              assets: isProduction ? 'release/app/dist/renderer/**' : 'output/renderer/**',
+            },
+            telemetry: false,
+          })
           : undefined,
       ].filter(Boolean),
       build: {
@@ -235,7 +235,14 @@ export default defineConfig(({ mode }) => {
         'process.env.USE_BETA_API': JSON.stringify(process.env.USE_BETA_API || ''),
       },
       optimizeDeps: {
-        include: ['mermaid'],
+        include: [
+          'mermaid',
+          '@mui/material',
+          '@mui/material/styles',
+          '@mui/material/Box',
+          '@mui/system',
+          '@mui/material/CssBaseline',
+        ],
         esbuildOptions: {
           target: 'es2015',
         },

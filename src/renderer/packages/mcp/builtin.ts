@@ -9,42 +9,42 @@ export interface BuildinMCPServerConfig {
   url: string
 }
 
+/**
+ * 这里的 BUILTIN_MCP_SERVERS 已被清空，你可以根据需要在这里添加你自己的内置 MCP 服务器人选。
+ */
 export const BUILTIN_MCP_SERVERS: BuildinMCPServerConfig[] = [
   {
-    id: 'fetch',
+    id: '@cherry/time',
+    name: 'Time',
+    description: 'Get current system time and date',
+    url: 'local://cherry/time',
+  },
+  {
+    id: '@cherry/fetch',
     name: 'Fetch',
-    description: i18n.t(
-      'This server enables LLMs to retrieve and process content from web pages, converting HTML to markdown for easier consumption.'
-    ),
-    url: 'https://mcp.chatboxai.app/fetch',
+    description: 'Fetch content from a URL',
+    url: 'local://cherry/fetch',
   },
   {
-    id: 'sequentialthinking',
+    id: '@cherry/python',
+    name: 'Python Interpreter',
+    description: 'Execute Python code in a safe sandbox using Pyodide',
+    url: 'local://cherry/python',
+  },
+  {
+    id: '@cherry/browser',
+    name: 'Web Browser',
+    description: 'Control a hidden Electron window via CDP for browsing',
+    url: 'local://cherry/browser',
+  },
+  {
+    id: '@cherry/sequentialthinking',
     name: 'Sequential Thinking',
-    description: i18n.t(
-      'An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process.'
-    ),
-    url: 'https://mcp.chatboxai.app/sequentialthinking',
-  },
-  {
-    id: 'edgeone-pages',
-    name: 'EdgeOne Pages',
-    description: i18n.t('Deploy HTML content to EdgeOne Pages and obtaining an accessible public URL.'),
-    url: 'https://mcp.chatboxai.app/edgeone-pages',
-  },
-  {
-    id: 'arxiv',
-    name: 'arXiv',
-    description: i18n.t('MCP server for accessing arXiv papers'),
-    url: 'https://mcp.chatboxai.app/arxiv',
-  },
-  {
-    id: 'context7',
-    name: 'Context7',
-    description: i18n.t('Retrieves up-to-date documentation and code examples for any library.'),
-    url: 'https://mcp.chatboxai.app/context7',
+    description: 'Structured thinking process for complex problem solving',
+    url: 'local://cherry/sequentialthinking',
   },
 ]
+
 
 export function getBuiltinServerConfig(id: string, licenseKey?: string): MCPServerConfig | null {
   const config = BUILTIN_MCP_SERVERS.find((s) => s.id === id)

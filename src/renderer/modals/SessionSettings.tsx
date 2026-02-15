@@ -77,9 +77,9 @@ const SessionSettingsModal = NiceModal.create(
       setEditingData((_editingData) =>
         _editingData
           ? {
-              ..._editingData,
-              settings: pick(_editingData.settings, ['provider', 'modelId']),
-            }
+            ..._editingData,
+            settings: pick(_editingData.settings, ['provider', 'modelId']),
+          }
           : _editingData
       )
     }
@@ -158,7 +158,7 @@ const SessionSettingsModal = NiceModal.create(
         title={t('Conversation Settings')}
         onFocus={(e) => e.stopPropagation()}
         trapFocus={false}
-        // fullWidth
+      // fullWidth
       >
         <div style={{ maxHeight: '60vh', overflowY: 'auto', overflowX: 'hidden' }}>
           <Stack>
@@ -401,7 +401,6 @@ function ThinkingBudgetConfig({
           value={currentSegmentValue}
           onChange={handleThinkingConfigChange}
           data={thinkingBudgetOptions}
-          fullWidth={false}
         />
       </div>
 
@@ -654,6 +653,33 @@ export function ChatConfig({
           </Flex>
         </Stack>
       )}
+
+      <Flex justify="space-between" align="center">
+        <Flex align="center" gap="xs">
+          <Text size="sm" fw="600">
+            {t('Reasoning Mode')}
+          </Text>
+          <Tooltip
+            label={t('Control the reasoning/thinking behavior of the model. "Default" uses model defaults, "Enabled" forces reasoning if supported, "Disabled" hides/turns off reasoning.')}
+            withArrow={true}
+            maw={320}
+            className="!whitespace-normal"
+            zIndex={3000}
+            events={{ hover: true, focus: true, touch: true }}
+          >
+            <ScalableIcon icon={IconInfoCircle} size={20} className="text-chatbox-tint-tertiary" />
+          </Tooltip>
+        </Flex>
+        <SegmentedControl
+          value={settings?.reasoningMode || 'default'}
+          onChange={(v) => onSettingsChange({ reasoningMode: v as any })}
+          data={[
+            { label: t('Default'), value: 'default' },
+            { label: t('Enabled'), value: 'enabled' },
+            { label: t('Disabled'), value: 'disabled' },
+          ]}
+        />
+      </Flex>
 
       <Stack>
         {settings?.provider === ModelProviderEnum.Claude && (

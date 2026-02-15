@@ -32,3 +32,4 @@ export const inputBoxPreConstructedMessageFamily = atomFamily((_sessionId: strin
 
 // Atom to store collapsed state of providers
 export const collapsedProvidersAtom = atomWithStorage<Record<string, boolean>>('collapsedProviders', {})
+

@@ -1,4 +1,5 @@
-import { ActionIcon, alpha, Box, Code, Collapse, Group, Paper, SimpleGrid, Space, Stack, Text } from '@mantine/core'
+import { ActionIcon, alpha, Badge, Box, Code, Collapse, Group, Paper, SimpleGrid, Space, Stack, Text, ThemeIcon } from '@mantine/core'
+
 import {
   type Message,
   type MessageReasoningPart,
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils'
 import { getToolName } from '@/packages/tools'
 import type { SearchResultItem } from '@/packages/web-search'
 import { ScalableIcon } from '../common/ScalableIcon'
+import Markdown from '../Markdown'
 
 const ToolCallHeader: FC<{ part: MessageToolCallPart; action: ReactNode; onClick: () => void }> = (props) => {
   return (
@@ -163,7 +165,63 @@ const WebSearchToolCallUI: FC<{ part: WebBrowsingToolCallPart }> = ({ part }) =>
 
 const GeneralToolCallUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
   const { t } = useTranslation()
-  const [expaned, setExpand] = useState(false)
+  const [expanded, setExpand] = useState(false)
+  const isError = part.state === 'error'
+
+  return (
+    <Stack gap="xs" mb="xs">
+      <ToolCallHeader
+        part={part}
+        onClick={() => setExpand((prev) => !prev)}
+        action={
+          <ScalableIcon icon={IconChevronRight} className={clsx('transition-transform', expanded ? 'rotate-90' : '')} />
+        }
+      />
+
+      <Collapse in={expanded}>
+        <Paper withBorder radius="md" p="sm" className={cn(isError ? "border-red-200 bg-red-50/30" : "")}>
+          <Stack gap="xs">
+            <Group gap="xs" c="chatbox-tertiary">
+              <ScalableIcon icon={IconCode} size={14} />
+              <Text fw={600} size="xs" c="chatbox-tertiary" m="0">
+                {t('Arguments')}
+              </Text>
+            </Group>
+            <Box>
+              <Code block className="text-xs">{JSON.stringify(part.args, null, 2)}</Code>
+            </Box>
+          </Stack>
+          {!!part.result && (
+            <Stack gap="xs" className="mt-3 pt-3 border-t border-dashed border-chatbox-border-primary">
+              <Group gap="xs" c={isError ? "red.6" : "chatbox-tertiary"}>
+                <ScalableIcon icon={isError ? IconCircleXFilled : IconArrowRight} size={14} />
+                <Text fw={600} size="xs" m="0">
+                  {isError ? t('Error') : t('Result')}
+                </Text>
+              </Group>
+              <Box className="max-h-[400px] overflow-auto">
+                {typeof part.result === 'string' ? (
+                  <div className={cn("text-sm", isError ? "text-red-700" : "")}>
+                    <Markdown>{part.result}</Markdown>
+                  </div>
+                ) : (
+                  <Code block className="text-xs">{JSON.stringify(part.result, null, 2)}</Code>
+                )}
+              </Box>
+            </Stack>
+          )}
+        </Paper>
+      </Collapse>
+    </Stack>
+  )
+}
+
+const PythonToolUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
+  const { t } = useTranslation()
+  const [expaned, setExpand] = useState(true)
+  const code = (part.args as any)?.code || ''
+  const result = part.result as string || ''
+
   return (
     <Stack gap="xs" mb="xs">
       <ToolCallHeader
@@ -173,36 +231,101 @@ const GeneralToolCallUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
           <ScalableIcon icon={IconChevronRight} className={clsx('transition-transform', expaned ? 'rotate-90' : '')} />
         }
       />
-
       <Collapse in={expaned}>
-        <Paper withBorder radius="md" p="sm">
-          <Stack gap="xs">
-            <Group gap="xs" c="chatbox-tertiary">
-              <ScalableIcon icon={IconCode} />
-              <Text fw={600} size="xs" c="chatbox-tertiary" m="0">
-                {t('Arguments')}
-              </Text>
-            </Group>
-            <Box>
-              <Code block>{JSON.stringify(part.args, null, 2)}</Code>
-            </Box>
-          </Stack>
-          {!!part.result && (
-            <Stack gap="xs" className="mt-2">
-              <Group gap="xs" c="chatbox-tertiary">
-                <ScalableIcon icon={IconArrowRight} />
-                <Text fw={600} size="xs" c="chatbox-tertiary" m="0">
-                  {t('Result')}
-                </Text>
-              </Group>
-              <Box>
-                <Code block>{JSON.stringify(part.result, null, 2)}</Code>
-              </Box>
-            </Stack>
+        <Stack gap="xs">
+          <Code block color="blue.1" c="blue.9" p="xs">
+            {code}
+          </Code>
+          {result && (
+            <Code block p="xs">
+              {result}
+            </Code>
           )}
-        </Paper>
+        </Stack>
       </Collapse>
     </Stack>
+  )
+}
+
+const BrowserToolUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
+  const { t } = useTranslation()
+  const [expaned, setExpand] = useState(true)
+  const url = (part.args as any)?.url || ''
+  const action = (part.args as any)?.action || 'open'
+  const result = part.result as string || ''
+
+  return (
+    <Stack gap="xs" mb="xs">
+      <ToolCallHeader
+        part={part}
+        onClick={() => setExpand((prev) => !prev)}
+        action={
+          <ScalableIcon icon={IconChevronRight} className={clsx('transition-transform', expaned ? 'rotate-90' : '')} />
+        }
+      />
+      <Collapse in={expaned}>
+        <Stack gap="xs">
+          <Group gap="xs">
+            <Badge size="xs" variant="filled">{action}</Badge>
+            <Text size="xs" truncate="end" fw={600}>{url}</Text>
+          </Group>
+          {result && (
+            <Paper withBorder p="xs" bg="gray.0">
+              <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-line' }}>{result}</Text>
+            </Paper>
+          )}
+        </Stack>
+      </Collapse>
+    </Stack>
+  )
+}
+
+const SequentialThinkingToolUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
+  const { t } = useTranslation()
+  const [expaned, setExpand] = useState(true)
+  const args = part.args as any
+  const isRevision = args.isRevision
+
+  return (
+    <Box mb="xs">
+      <Group
+        gap="xs"
+        onClick={() => setExpand((prev) => !prev)}
+        className="cursor-pointer py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md px-2 transition-all duration-200"
+      >
+        <ThemeIcon
+          variant="light"
+          color={isRevision ? 'orange' : 'blue'}
+          size="sm"
+          radius="xl"
+          className={cn(part.state === 'call' ? 'animate-pulse' : '')}
+          style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+        >
+          <IconBulb size={12} />
+        </ThemeIcon>
+        <Text size="xs" fw={700} c={isRevision ? 'orange.8' : 'blue.8'} className="tracking-tight">
+          {isRevision ? t('Revision') : t('Thought')} #{args.thoughtNumber}
+          {args.totalThoughts ? ` / ${args.totalThoughts}` : ''}
+        </Text>
+        <ScalableIcon
+          icon={IconChevronRight}
+          size={12}
+          className={clsx('transition-transform opacity-30', expaned ? 'rotate-90' : '')}
+        />
+      </Group>
+      <Collapse in={expaned}>
+        <Box pl={32} pb={6} pr={8}>
+          <Text
+            size="sm"
+            c="chatbox-text-secondary"
+            style={{ whiteSpace: 'pre-line', lineHeight: 1.6, fontStyle: 'italic' }}
+            className="opacity-90"
+          >
+            {args.thought}
+          </Text>
+        </Box>
+      </Collapse>
+    </Box>
   )
 }
 
@@ -213,93 +336,19 @@ export const ToolCallPartUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
       return <WebSearchToolCallUI part={parsedPart.data as WebBrowsingToolCallPart} />
     }
   }
+
+  if (part.toolName.includes('sequentialthinking')) {
+    return <SequentialThinkingToolUI part={part} />
+  }
+
+  if (part.toolName.includes('python')) {
+    return <PythonToolUI part={part} />
+  }
+
+  if (part.toolName.includes('browser')) {
+    return <BrowserToolUI part={part} />
+  }
+
   return <GeneralToolCallUI part={part} />
 }
 
-export const ReasoningContentUI: FC<{
-  message: Message
-  part?: MessageReasoningPart
-  onCopyReasoningContent: (content: string) => (e: React.MouseEvent<HTMLButtonElement>) => void
-}> = ({ message, part, onCopyReasoningContent }) => {
-  const reasoningContent = part?.text || message.reasoningContent || ''
-  const { t } = useTranslation()
-  const isThinking =
-    (message.generating &&
-      part &&
-      message.contentParts &&
-      message.contentParts.length > 0 &&
-      message.contentParts[message.contentParts.length - 1] === part) ||
-    false
-  const [isExpanded, setIsExpanded] = useState<boolean>(false)
-
-  // Timer state management:
-  // - elapsedTime: Real-time updates while thinking is active (updates every 100ms)
-  // - isThinking: True when message is generating AND this reasoning part is the last content part
-  // - shouldShowTimer: Only show timer for streaming responses, hide for non-streaming
-  const elapsedTime = useThinkingTimer(part?.startTime, isThinking)
-  const shouldShowTimer = message.isStreamingMode === true // Show timer only when explicitly marked as streaming
-
-  // Timer display logic with clear priority order:
-  // 1. If we have a final duration (thinking completed), always show it (persistent display)
-  // 2. If actively thinking and we have elapsed time, show real-time updates
-  // 3. Otherwise show 0 (fallback for edge cases)
-  // This ensures the timer stops immediately when thinking ends and persists the final duration
-  const displayTime =
-    part?.duration && part.duration > 0 ? part.duration : isThinking && elapsedTime > 0 ? elapsedTime : 0
-
-  const toggleExpanded = useCallback(() => {
-    setIsExpanded((prev) => !prev)
-  }, [])
-
-  return (
-    <Paper withBorder radius="md" mb="xs">
-      <Box onClick={toggleExpanded} className="cursor-pointer group">
-        <Group px="xs" justify="space-between" className="w-full">
-          <Group gap="xs" className={cn(isThinking ? 'animate-pulse' : '')}>
-            <ScalableIcon icon={IconBulb} color="var(--chatbox-tint-warning)" />
-            <Text fw={600} size="sm">
-              {isThinking ? t('Thinking') : t('Deeply thought')}
-            </Text>
-            {reasoningContent.length > 0 && shouldShowTimer && (
-              <Text size="xs" c="chatbox-tertiary">
-                ({formatElapsedTime(displayTime)})
-              </Text>
-            )}
-          </Group>
-          <Space miw="xl" />
-          <Group gap="xs">
-            <ActionIcon
-              variant="subtle"
-              c="chatbox-gray"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                onCopyReasoningContent(reasoningContent)(e)
-              }}
-              aria-label={t('Copy reasoning content')}
-            >
-              <ScalableIcon icon={IconCopy} />
-            </ActionIcon>
-
-            <ScalableIcon
-              icon={IconChevronRight}
-              className={clsx('transition-transform', isExpanded ? 'rotate-90' : '')}
-            />
-          </Group>
-        </Group>
-      </Box>
-
-      <Collapse in={isExpanded}>
-        <Box
-          style={{
-            borderTop: '1px solid var(--paper-border-color)',
-          }}
-        >
-          <Text size="sm" px={'sm'} style={{ whiteSpace: 'pre-line', lineHeight: 1.5 }}>
-            {reasoningContent}
-          </Text>
-        </Box>
-      </Collapse>
-    </Paper>
-  )
-}

@@ -74,17 +74,17 @@ function Index() {
       name: selectedCopilot?.name || 'Untitled',
       messages: selectedCopilot
         ? [
-            {
-              id: uuidv4(),
-              role: 'system',
-              contentParts: [
-                {
-                  type: 'text',
-                  text: selectedCopilot.prompt,
-                },
-              ],
-            },
-          ]
+          {
+            id: uuidv4(),
+            role: 'system',
+            contentParts: [
+              {
+                type: 'text',
+                text: selectedCopilot.prompt,
+              },
+            ],
+          },
+        ]
         : initEmptyChatSession().messages,
     }))
   }, [selectedCopilot])
@@ -211,7 +211,7 @@ function Index() {
                     flex="0 1 auto"
                     onClick={() => {
                       router.navigate({
-                        to: isSmallScreen ? '/settings/provider' : '/settings/chatbox-ai',
+                        to: '/settings/provider',
                       })
                     }}
                   >
@@ -247,9 +247,7 @@ function Index() {
               </Stack>
             </Box>
           ) : (
-            showCopilotsInNewSession && (
-              <CopilotPicker onSelect={(copilot) => setSession((old) => ({ ...old, copilotId: copilot?.id }))} />
-            )
+            null
           )}
 
           <InputBox
@@ -281,12 +279,12 @@ const CopilotPicker = ({ selectedId, onSelect }: { selectedId?: string; onSelect
       myCopilots.length >= MAX_COPILOTS_TO_SHOW
         ? myCopilots
         : [
-            ...myCopilots,
-            ...(myCopilots.length && remoteCopilots.length ? [undefined] : []),
-            ...remoteCopilots
-              .filter((c) => !myCopilots.map((mc) => mc.id).includes(c.id))
-              .slice(0, MAX_COPILOTS_TO_SHOW - myCopilots.length - 1),
-          ],
+          ...myCopilots,
+          ...(myCopilots.length && remoteCopilots.length ? [undefined] : []),
+          ...remoteCopilots
+            .filter((c) => !myCopilots.map((mc) => mc.id).includes(c.id))
+            .slice(0, MAX_COPILOTS_TO_SHOW - myCopilots.length - 1),
+        ],
     [myCopilots, remoteCopilots]
   )
 

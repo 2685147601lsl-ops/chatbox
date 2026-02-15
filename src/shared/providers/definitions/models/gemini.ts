@@ -18,6 +18,7 @@ interface Options {
   topP?: number
   maxOutputTokens?: number
   stream?: boolean
+  aiProvider?: string
 }
 
 export default class Gemini extends AbstractAISDKModel {
@@ -115,7 +116,7 @@ export default class Gemini extends AbstractAISDKModel {
         responseModalities: ['TEXT', 'IMAGE'],
       }
       if (params.aspectRatio && params.aspectRatio !== 'auto') {
-        providerOptions.imageConfig = { aspectRatio: params.aspectRatio }
+        providerOptions.imageConfig = { aspectRatio: params.aspectRatio as any }
       }
 
       const result = await generateText({

@@ -26,11 +26,7 @@ import platform from '@/platform'
 import { featureFlags } from '@/utils/feature-flags'
 
 const ITEMS = [
-  {
-    key: 'chatbox-ai',
-    label: 'Chatbox AI',
-    icon: <IconSparkles className="w-full h-full" />,
-  },
+
   {
     key: 'provider',
     label: 'Model Provider',
@@ -42,27 +38,18 @@ const ITEMS = [
     icon: <IconBox className="w-full h-full" />,
   },
   {
-    key: 'web-search',
-    label: 'Web Search',
-    icon: <IconWorldWww className="w-full h-full" />,
+    key: 'mcp',
+    label: 'MCP',
+    icon: <IconCircleDottedLetterM className="w-full h-full" />,
   },
-  ...(featureFlags.mcp
-    ? [
-        {
-          key: 'mcp',
-          label: 'MCP',
-          icon: <IconCircleDottedLetterM className="w-full h-full" />,
-        },
-      ]
-    : []),
   ...(featureFlags.knowledgeBase
     ? [
-        {
-          key: 'knowledge-base',
-          label: 'Knowledge Base',
-          icon: <IconBook className="w-full h-full" />,
-        },
-      ]
+      {
+        key: 'knowledge-base',
+        label: 'Knowledge Base',
+        icon: <IconBook className="w-full h-full" />,
+      },
+    ]
     : []),
   {
     key: 'document-parser',
@@ -77,12 +64,12 @@ const ITEMS = [
   ...(platform.type === 'mobile'
     ? []
     : [
-        {
-          key: 'hotkeys',
-          label: 'Keyboard Shortcuts',
-          icon: <IconKeyboard className="w-full h-full" />,
-        },
-      ]),
+      {
+        key: 'hotkeys',
+        label: 'Keyboard Shortcuts',
+        icon: <IconKeyboard className="w-full h-full" />,
+      },
+    ]),
   {
     key: 'general',
     label: 'General Settings',
@@ -131,7 +118,6 @@ export function SettingsRoot() {
   const key = routerState.location.pathname.split('/')[2]
   const isSmallScreen = useIsSmallScreen()
   const { providers: availableProviders } = useProviders()
-  const isChatboxAIActivated = availableProviders.some((p) => p.id === 'chatbox-ai')
 
   return (
     <Flex flex={1} h="100%" miw={isSmallScreen ? undefined : 800}>
@@ -180,9 +166,7 @@ export function SettingsRoot() {
                 >
                   {t(item.label)}
                 </Text>
-                {item.key === 'chatbox-ai' && isChatboxAIActivated && (
-                  <Indicator size={8} color="chatbox-success" className="ml-auto" />
-                )}
+
                 {isSmallScreen && (
                   <ScalableIcon icon={IconChevronRight} size={20} className="!text-chatbox-tint-tertiary" />
                 )}

@@ -12,6 +12,7 @@ import { z } from 'zod'
 export interface ModelInterface {
   name: string
   modelId: string
+  aiProvider?: string
   isSupportVision(): boolean
   isSupportToolUse(scope?: ToolUseScope): boolean
   isSupportSystemMessage(): boolean
