@@ -21,19 +21,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
@@ -44,12 +31,13 @@ jobs:
           java-version: '17'
 
       - name: Build Web Assets
-        run: pnpm run mobile:sync:android
+        # 使用自定义编译命令，避免直接运行 mobile:sync:android 导致的目录缺失错误
+        run: cross-env CHATBOX_BUILD_TARGET=mobile_app CHATBOX_BUILD_PLATFORM=android npx electron-vite build
         env:
-          CHATBOX_BUILD_TARGET: mobile_app
-          CHATBOX_BUILD_PLATFORM: android
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: Add Android Platform (if missing)
+      - name: Initialize Android Project
+        # 如果目录不存在，则初始化
         run: |
           if [ ! -d "android" ]; then
             npx cap add android
