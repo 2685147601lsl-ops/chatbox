@@ -59,13 +59,13 @@ export default function MessageErrTips(props: { msg: Message }) {
 
   const errorMessage = msg.errorExtra?.responseBody
     ? (() => {
-        try {
-          const json = JSON.parse(msg.errorExtra.responseBody as string)
-          return JSON.stringify(json, null, 2)
-        } catch {
-          return String(msg.errorExtra.responseBody)
-        }
-      })()
+      try {
+        const json = JSON.parse(msg.errorExtra.responseBody as string)
+        return JSON.stringify(json, null, 2)
+      } catch {
+        return String(msg.errorExtra.responseBody)
+      }
+    })()
     : msg.error || ''
 
   const { copied, copy } = useCopied(errorMessage)
@@ -104,7 +104,7 @@ export default function MessageErrTips(props: { msg: Message }) {
   } else if (msg.error.startsWith('API Error')) {
     tips.push(
       <Trans
-        i18nKey="Connection to {{aiProvider}} failed. This typically occurs due to incorrect configuration or {{aiProvider}} account issues. Please <buttonOpenSettings>check your settings</buttonOpenSettings> and verify your {{aiProvider}} account status, or purchase a <LinkToLicensePricing>Chatbox AI License</LinkToLicensePricing> to unlock all advanced models instantly without any configuration."
+        i18nKey="Connection to {{aiProvider}} failed. This typically occurs due to incorrect configuration or {{aiProvider}} account issues. Please <buttonOpenSettings>check your settings</buttonOpenSettings> and verify your {{aiProvider}} account status."
         values={{
           aiProvider: msg.aiProvider ? aiProviderNameHash[msg.aiProvider] : 'AI Provider',
         }}
@@ -117,13 +117,6 @@ export default function MessageErrTips(props: { msg: Message }) {
               }}
             />
           ),
-          LinkToLicensePricing: (
-            <LinkTargetBlank
-              className="!font-bold !text-gray-700 hover:!text-blue-600 transition-colors"
-              href="https://chatboxai.app/redirect_app/advanced_url_processing?utm_source=app&utm_content=msg_bad_provider"
-            />
-          ),
-          a: <a href={`https://chatboxai.app/redirect_app/faqs/${settingActions.getLanguage()}`} target="_blank" />,
         }}
       />
     )
@@ -190,22 +183,13 @@ export default function MessageErrTips(props: { msg: Message }) {
               <Link
                 className="cursor-pointer italic"
                 onClick={() => {
-                  platform.openLink(
-                    'https://chatboxai.app/redirect_app/view_more_plans?utm_source=app&utm_content=msg_upgrade_required'
-                  )
-                  trackingEvent('click_view_more_plans_button_from_upgrade_error_tips', {
-                    event_category: 'user',
-                  })
+                  navigateToSettings()
                 }}
               ></Link>
             ),
-            LinkToHomePage: <LinkTargetBlank href="https://chatboxai.app"></LinkTargetBlank>,
-            LinkToAdvancedFileProcessing: (
-              <LinkTargetBlank href="https://chatboxai.app/redirect_app/advanced_file_processing?utm_source=app&utm_content=msg_upgrade_required"></LinkTargetBlank>
-            ),
-            LinkToAdvancedUrlProcessing: (
-              <LinkTargetBlank href="https://chatboxai.app/redirect_app/advanced_url_processing?utm_source=app&utm_content=msg_upgrade_required"></LinkTargetBlank>
-            ),
+            LinkToHomePage: <span></span>,
+            LinkToAdvancedFileProcessing: <span></span>,
+            LinkToAdvancedUrlProcessing: <span></span>,
             OpenDocumentParserSettingButton: (
               <Link
                 className="cursor-pointer italic"
@@ -223,11 +207,7 @@ export default function MessageErrTips(props: { msg: Message }) {
       <Trans
         i18nKey="unknown error tips"
         components={[
-          <a
-            key="a"
-            href={`https://chatboxai.app/redirect_app/faqs/${settingActions.getLanguage()}?utm_source=app&utm_content=msg_error_unknown`}
-            target="_blank"
-          ></a>,
+          <span key="a"></span>,
         ]}
       />
     )

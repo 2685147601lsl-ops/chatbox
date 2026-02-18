@@ -292,10 +292,7 @@ const ImportExportDataSection = () => {
   const onExport = async () => {
     const data = await storage.getAll()
     delete data[StorageKey.Configs] // 不导出 uuid
-      ; (data[StorageKey.Settings] as Settings).licenseDetail = undefined // 不导出license认证数据
-      ; (data[StorageKey.Settings] as Settings).licenseInstances = undefined // 不导出license设备数据，导入数据的新设备也应该计入设备数
     if (!exportItems.includes(ExportDataItem.Key)) {
-      delete (data[StorageKey.Settings] as Settings).licenseKey
       data[StorageKey.Settings].providers = mapValues(
         (data[StorageKey.Settings] as Settings).providers,
         (provider: ProviderInfo) => {
@@ -421,7 +418,7 @@ const ImportExportDataSection = () => {
         )}
         {[
           { label: t('Settings'), value: ExportDataItem.Setting },
-          { label: t('API KEY & License'), value: ExportDataItem.Key },
+          { label: t('API KEY'), value: ExportDataItem.Key },
           { label: t('Chat History'), value: ExportDataItem.Conversations },
         ].map(({ label, value }) => (
           <Checkbox

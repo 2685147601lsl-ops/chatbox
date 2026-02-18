@@ -20,6 +20,7 @@ export enum ModelProviderEnum {
   XAI = 'xAI',
   OpenRouter = 'openrouter',
   Custom = 'custom',
+  Steward = 'steward',
 }
 
 export enum ModelProviderType {
@@ -28,4 +29,5 @@ export enum ModelProviderType {
   Gemini = 'gemini',
   Claude = 'claude',
   OpenAIResponses = 'openai-responses',
+  Steward = 'steward',
 }

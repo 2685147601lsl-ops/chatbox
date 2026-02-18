@@ -46,7 +46,7 @@ import { initSettingsStore } from './stores/settingsStore'
 // }
 
 // Token estimation system initialization (runs in all environments)
-import('./setup/token_estimation_init')
+import('./setup/token_estimation_init.js')
 
 // 引入移动端安全区域代码，主要为了解决异形屏幕的问题
 // 引入移动端安全区域代码，主要为了解决异形屏幕的问题
@@ -68,10 +68,10 @@ async function initializeApp() {
   }
 
   // 最后执行 storage 清理，清理不 block 进入UI
-  import('./setup/storage_clear')
+  import('./setup/storage_clear.js')
 
   // 启动mcp服务器
-  import('./setup/mcp_bootstrap')
+  import('./setup/mcp_bootstrap.js')
 }
 
 // ==========渲染节点==============

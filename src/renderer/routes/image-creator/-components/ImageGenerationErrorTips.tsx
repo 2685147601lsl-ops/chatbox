@@ -56,17 +56,10 @@ export function ImageGenerationErrorTips({ record, onRetry, isRetrying }: ImageG
                     component="span"
                     className="cursor-pointer underline"
                     c="chatbox-brand"
-                    onClick={() => {
-                      platform.openLink(
-                        'https://chatboxai.app/redirect_app/view_more_plans?utm_source=app&utm_content=image_creator_upgrade_required'
-                      )
-                      trackingEvent('click_view_more_plans_button_from_image_creator', {
-                        event_category: 'user',
-                      })
-                    }}
+                    onClick={() => navigateToSettings()}
                   />
                 ),
-                LinkToHomePage: <LinkTargetBlank href="https://chatboxai.app" />,
+                LinkToHomePage: <Text component="span" />,
               }}
             />
           </Text>

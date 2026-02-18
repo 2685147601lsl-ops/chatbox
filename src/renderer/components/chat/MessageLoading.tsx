@@ -37,18 +37,6 @@ function MessageStatus(props: { status: NonNullable<Message['status']>[number] }
             )}
           </span>
         </LoadingBubble>
-        {status.mode === 'local' && remoteConfig.setting_chatboxai_first && (
-          <Typography variant="body2" sx={{ opacity: 0.5 }} className="pb-1">
-            <Trans
-              i18nKey="Due to local processing limitations, <Link>Chatbox AI Service</Link> is recommended for enhanced document processing capabilities and better results."
-              components={{
-                Link: (
-                  <LinkTargetBlank href="https://chatboxai.app/redirect_app/advanced_file_processing?utm_source=app&utm_content=msg_local_limitation"></LinkTargetBlank>
-                ),
-              }}
-            />
-          </Typography>
-        )}
       </div>
     )
   }
@@ -65,18 +53,6 @@ function MessageStatus(props: { status: NonNullable<Message['status']>[number] }
             )}
           </span>
         </LoadingBubble>
-        {status.mode === 'local' && remoteConfig.setting_chatboxai_first && (
-          <Typography variant="body2" sx={{ opacity: 0.5 }} className="pb-1">
-            <Trans
-              i18nKey="Due to local processing limitations, <Link>Chatbox AI Service</Link> is recommended to enhance webpage parsing capabilities, especially for dynamic pages."
-              components={{
-                Link: (
-                  <LinkTargetBlank href="https://chatboxai.app/redirect_app/advanced_url_processing?utm_source=app&utm_content=msg_local_limitation"></LinkTargetBlank>
-                ),
-              }}
-            />
-          </Typography>
-        )}
       </div>
     )
   }

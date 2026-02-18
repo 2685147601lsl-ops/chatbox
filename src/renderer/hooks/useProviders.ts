@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import useChatboxAIModels from './useChatboxAIModels'
 
-export const useProviders = () => {
+export const useProviders = (options?: { includeHidden?: boolean }) => {
   const { chatboxAIModels } = useChatboxAIModels()
   const { setSettings, ...settings } = useSettingsStore((state) => state)
   const providerSettingsMap = settings.providers
@@ -16,9 +16,16 @@ export const useProviders = () => {
   const providers = useMemo(
     () =>
       allProviderBaseInfos
+        .filter((p) => {
+          // Filter out Steward from normal model selection unless explicitly requested
+          if (!options?.includeHidden && p.id === ModelProviderEnum.Steward) {
+            return false
+          }
+          return true
+        })
         .map((p) => {
           const providerSettings = providerSettingsMap?.[p.id]
-          if (p.id === ModelProviderEnum.ChatboxAI && settings.licenseKey) {
+          if (p.id === ModelProviderEnum.ChatboxAI) {
             return {
               ...p,
               ...providerSettings,
@@ -26,8 +33,11 @@ export const useProviders = () => {
             }
           } else if (
             (!p.isCustom && providerSettings?.apiKey) ||
-            ((p.isCustom || p.id === ModelProviderEnum.Ollama || p.id === ModelProviderEnum.LMStudio) &&
-              providerSettings?.models?.length)
+            ((p.isCustom ||
+              p.id === ModelProviderEnum.Ollama ||
+              p.id === ModelProviderEnum.LMStudio ||
+              p.id === ModelProviderEnum.Steward) &&
+              (providerSettings?.models?.length || p.defaultSettings?.models?.length))
           ) {
             return {
               // 如果没有自定义 models 列表，使用 defaultSettings，否则被自定义的列表（可能有添加或删除部分 model）覆盖, 不能包含用户排除过的 models
@@ -40,7 +50,7 @@ export const useProviders = () => {
           }
         })
         .filter((p) => !!p),
-    [providerSettingsMap, allProviderBaseInfos, chatboxAIModels, settings.licenseKey]
+    [providerSettingsMap, allProviderBaseInfos, chatboxAIModels, options?.includeHidden]
   )
 
   const favoritedModels = useMemo(

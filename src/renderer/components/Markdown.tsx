@@ -154,6 +154,18 @@ function Markdown(props: {
           source: (props: any) => (
             <source {...props} src={props.src ? sanitizeUrl(props.src) : undefined} />
           ),
+          img: (props: any) => (
+            <img
+              {...props}
+              src={props.src ? sanitizeUrl(props.src) : undefined}
+              className="max-w-full h-auto rounded-lg shadow-sm mt-2"
+              loading="lazy"
+              onClick={(e) => {
+                e.stopPropagation()
+                // Could add preview logic here if needed
+              }}
+            />
+          ),
         }),
         [uniqueId, hiddenCodeCopyButton, enableMermaidRendering, generating, generatingCodeIndex, forceColorScheme]
       )}

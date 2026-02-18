@@ -132,40 +132,8 @@ export const SessionSettingsSchema = GlobalSessionSettingsSchema.extend({
   reasoningMode: z.enum(['default', 'enabled', 'disabled']).optional().catch('default'),
 })
 
-const UnifiedTokenUsageDetailSchema = z.object({
-  type: z.string(), // "plan" | "trial" | ... (more types in future)
-  token_usage: z.number(),
-  token_limit: z.number(),
-})
+// (License details removed)
 
-const ChatboxAILicenseDetailSchema = z.object({
-  type: z.enum(['chatboxai-3.5', 'chatboxai-4']).optional(),
-  name: z.string(),
-  status: z.string().optional(),
-  defaultModel: z.enum(['chatboxai-3.5', 'chatboxai-4']).optional(),
-  remaining_quota_35: z.number(),
-  remaining_quota_4: z.number(),
-  remaining_quota_image: z.number(),
-  image_used_count: z.number(),
-  image_total_quota: z.number(),
-  plan_image_limit: z.number(),
-  token_refreshed_time: z.string(),
-  token_next_refresh_time: z.string().optional(),
-  token_expire_time: z.string().nullish(),
-  remaining_quota_unified: z.number(),
-  expansion_pack_limit: z.number(),
-  expansion_pack_usage: z.number(),
-  unified_token_usage: z.number(),
-  unified_token_limit: z.number(),
-  unified_token_usage_details: z.array(UnifiedTokenUsageDetailSchema).default([]),
-  key: z.string().optional(),
-  price_type: z.string().optional(),
-  order_type: z.string().optional(),
-  utm_source: z.string().optional(),
-  expires_at: z.string().optional(),
-  recurring_canceled: z.boolean().nullish(),
-  payment_type: z.string().optional(),
-})
 
 export const shortcutSendValues = [
   '',
@@ -307,15 +275,12 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
     .optional()
     .catch(undefined),
 
-  // chatboxai
-  licenseKey: z.string().optional(),
-  licenseInstances: z.record(z.string(), z.string()).optional().catch(undefined),
-  licenseDetail: ChatboxAILicenseDetailSchema.optional().catch(undefined),
-  licenseActivationMethod: z.enum(['login', 'manual']).optional(),
-  lastSelectedLicenseByUser: z.record(z.string(), z.string()).optional().catch(undefined),
-  // 在 licensekeyview UI中显示/记忆的key，以免用户使用 login 方式后老 key 被清除，他也不记得
-  memorizedManualLicenseKey: z.string().optional(),
-
+  // chatboxai (license fields)
+  licenseKey: z.string().optional().catch(undefined),
+  licenseActivationMethod: z.enum(['manual', 'web', 'none']).optional().catch(undefined),
+  licenseDetail: z.record(z.string(), z.any()).optional().catch(undefined),
+  licenseInstances: z.array(z.any()).optional().catch(undefined),
+  memorizedManualLicenseKey: z.string().optional().catch(undefined),
   // chat settings
   showWordCount: z.boolean().optional().catch(undefined),
   showTokenCount: z.boolean().optional().catch(undefined),
@@ -396,8 +361,6 @@ export type OpenAIParams = z.infer<typeof OpenAIParamsSchema>
 export type GoogleParams = z.infer<typeof GoogleParamsSchema>
 export type ProviderOptions = z.infer<typeof ProviderOptionsSchema>
 export type GlobalSessionSettings = z.infer<typeof GlobalSessionSettingsSchema>
-export type ChatboxAILicenseDetail = z.infer<typeof ChatboxAILicenseDetailSchema>
-export type UnifiedTokenUsageDetail = z.infer<typeof UnifiedTokenUsageDetailSchema>
 export type ShortcutSendValue = z.infer<typeof ShortcutSendValueSchema>
 export type ShortcutToggleWindowValue = z.infer<typeof ShortcutToggleWindowValueSchema>
 export type ShortcutName = keyof ShortcutSetting

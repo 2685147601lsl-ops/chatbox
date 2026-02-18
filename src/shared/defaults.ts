@@ -38,7 +38,8 @@ export function settings(): Settings {
     // claudeApiHost: 'https://api.anthropic.com',
     // claudeModel: 'claude-3-5-sonnet-20241022',
 
-    // chatboxAIModel: 'chatboxai-3.5',
+    // chatboxAIModel: 'chatboxai-3.5', // removed
+
 
     // geminiAPIKey: '',
     // geminiAPIHost: 'https://generativelanguage.googleapis.com',
@@ -146,21 +147,22 @@ export function newConfigs(): Config {
 }
 
 export function getDefaultPrompt() {
-  return 'You are a helpful assistant.'
+  return 'I am your personal AI butler, capable of helping you with text, images, and videos. How may I serve you today?'
 }
 
 export function chatSessionSettings(): SessionSettings {
   return {
-    provider: ModelProviderEnum.ChatboxAI,
-    modelId: 'chatboxai-4',
+    provider: ModelProviderEnum.Steward,
+    modelId: 'grok-4-mini',
     maxContextMessageCount: Number.MAX_SAFE_INTEGER,
   }
 }
 
+
 export function pictureSessionSettings(): SessionSettings {
   return {
-    provider: ModelProviderEnum.ChatboxAI,
-    modelId: 'DALL-E-3',
+    provider: ModelProviderEnum.Steward,
+    modelId: 'grok-imagine-1.0',
     imageGenerateNum: 1,
     dalleStyle: 'vivid',
   }

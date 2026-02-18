@@ -17,7 +17,8 @@ import os from 'os'
 import path from 'path'
 // @ts-expect-error - source-map-support doesn't have type definitions
 import * as sourceMapSupport from 'source-map-support'
-import type { ShortcutSetting } from 'src/shared/types'
+import { ShortcutSetting } from 'src/shared/types'
+import { AppUpdater } from './app-updater.js'
 import * as analystic from './analystic-node'
 import * as autoLauncher from './autoLauncher'
 import { handleDeepLink } from './deeplinks'
@@ -752,4 +753,35 @@ ipcMain.handle('window:close', () => {
 
 ipcMain.handle('window:is-maximized', () => {
   return mainWindow?.isMaximized()
+})
+
+// --- MCP Browser Tool Support ---
+ipcMain.handle('mcp:browser:control', async (event, { url, action, script }) => {
+  const offscreenWindow = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      offscreen: true,
+    }
+  })
+
+  try {
+    if (action === 'open' || !action) {
+      await offscreenWindow.loadURL(url)
+      // Wait for a bit for SPA/JS content
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      const content = await offscreenWindow.webContents.executeJavaScript('document.body.innerText')
+      const title = offscreenWindow.getTitle()
+      return `Title: ${title}\n\nContent:\n${content.slice(0, 10000)}`
+    } else if (action === 'js' && script) {
+      await offscreenWindow.loadURL(url)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      const result = await offscreenWindow.webContents.executeJavaScript(script)
+      return JSON.stringify(result, null, 2)
+    }
+    return 'Unknown browser action'
+  } catch (error) {
+    return `Browser error: ${(error as Error).message}`
+  } finally {
+    offscreenWindow.close()
+  }
 })

@@ -1,5 +1,6 @@
 import { tool } from 'ai'
 import { z } from 'zod'
+import { fetchWithProxy } from '@/utils/request'
 
 // --- @cherry/time ---
 export const timeTool = tool({
@@ -18,13 +19,16 @@ export const fetchTool = tool({
     }),
     execute: async ({ url }) => {
         try {
-            const response = await fetch(url)
-            if (!response.ok) {
-                return `Error: ${response.status} ${response.statusText}`
-            }
+            const response = await fetchWithProxy(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                }
+            })
             const text = await response.text()
-            if (text.length > 20000) {
-                return text.slice(0, 20000) + '... (truncated)'
+            if (text.length > 50000) {
+                return text.slice(0, 50000) + '... (truncated)'
             }
             return text
         } catch (error) {
@@ -73,6 +77,20 @@ Each thought can build on, question, or revise previous insights.`,
 })
 
 // --- @cherry/python ---
+let pyodideInstance: any = null
+async function getPyodide() {
+    if (pyodideInstance) return pyodideInstance
+    if (!(window as any).loadPyodide) {
+        // Load dynamically if not present
+        const script = document.createElement('script')
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js'
+        document.head.appendChild(script)
+        await new Promise((resolve) => { script.onload = resolve })
+    }
+    pyodideInstance = await (window as any).loadPyodide()
+    return pyodideInstance
+}
+
 export const pythonTool = tool({
     description: 'Execute Python code using Pyodide in a sandboxed environment.',
     inputSchema: z.object({
@@ -80,9 +98,16 @@ export const pythonTool = tool({
     }),
     execute: async ({ code }) => {
         try {
-            // In a real implementation, we would load pyodide here if not already loaded.
-            // For now, let's provide a mock or simple implementation.
-            return `Python execution result (Mock): Successfully executed code of length ${code.length}. \n(Note: Pyodide integration pending)`
+            const pyodide = await getPyodide()
+            // Capture stdout
+            pyodide.runPython(`
+import sys
+import io
+sys.stdout = io.StringIO()
+`)
+            await pyodide.runPythonAsync(code)
+            const stdout = pyodide.runPython('sys.stdout.getvalue()')
+            return stdout || 'Execution successful (no output)'
         } catch (error) {
             return `Python Error: ${(error as Error).message}`
         }
@@ -91,14 +116,27 @@ export const pythonTool = tool({
 
 // --- @cherry/browser ---
 export const browserTool = tool({
-    description: 'Control a hidden Electron window via CDP for browsing.',
+    description: 'Control a hidden Electron window for browsing. Best for JavaScript-heavy sites.',
     inputSchema: z.object({
         url: z.string().url().describe('The URL to open'),
         action: z.enum(['open', 'js', 'reset']).default('open'),
         script: z.string().optional().describe('JS script to execute'),
     }),
-    execute: async ({ url, action }) => {
-        return `Browser result (Mock): ${action} ${url} in hidden window. \n(Note: Electron main process integration required for full functionality)`
+    execute: async ({ url, action, script }) => {
+        // Desktop Electron environment check
+        if (typeof (window as any).electronAPI?.invoke === 'function') {
+            return await (window as any).electronAPI.invoke('mcp:browser:control', { url, action, script })
+        }
+
+        // Fallback for non-desktop or browser-based dev env
+        const note = '(Note: You are currently not in the Desktop App environment. The advanced browser tool with JS rendering is unavailable. Falling back to basic content fetching...)\n\n'
+        try {
+            const response = await fetchWithProxy(url)
+            const text = await response.text()
+            return note + (text.slice(0, 20000) + (text.length > 20000 ? '... (truncated)' : ''))
+        } catch (error) {
+            return note + `Fallback fetch failed: ${(error as Error).message}`
+        }
     },
 })
 

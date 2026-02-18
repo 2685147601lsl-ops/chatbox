@@ -671,7 +671,7 @@ const PictureGallery = memo(({ pictures, compact, onReport }: PictureGalleryProp
           outlineID: 'pswp__icn-download',
         },
         appendTo: 'bar',
-        onClick: async (_e, _el, pswp) => {
+        onClick: async (_e: any, _el: any, pswp: any) => {
           const picture = pictures[pswp.currIndex]
           if (picture.storageKey) {
             const base64 = await storage.getBlob(picture.storageKey)
@@ -704,7 +704,7 @@ const PictureGallery = memo(({ pictures, compact, onReport }: PictureGalleryProp
             outlineID: 'pswp__icn-report',
           },
           appendTo: 'bar',
-          onClick: (_e, _el, pswp) => {
+          onClick: (_e: any, _el: any, pswp: any) => {
             const picture = pictures[pswp.currIndex]
             pswp.close()
             onReport(picture)
@@ -721,7 +721,7 @@ const PictureGallery = memo(({ pictures, compact, onReport }: PictureGalleryProp
             <ImageInStorageGalleryItem key={p.storageKey} storageKey={p.storageKey} height={imageHeight} />
           ) : p.url ? (
             <GalleryItem key={p.url} original={p.url} thumbnail={p.url} width={1024} height={1024}>
-              {({ ref, open }) => (
+              {({ ref, open }: any) => (
                 <Img
                   src={p.url}
                   h={imageHeight}
@@ -761,7 +761,7 @@ const ImageInStorageGalleryItem = ({ storageKey, height }: { storageKey: string;
 
   return pic ? (
     <GalleryItem original={pic.data} thumbnail={pic.data} width={pic.width} height={pic.height}>
-      {({ ref, open }) => (
+      {({ ref, open }: any) => (
         <Img
           src={pic.data}
           h={height ?? fallbackHeight}

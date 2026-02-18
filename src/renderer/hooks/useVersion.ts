@@ -32,15 +32,7 @@ export default function useVersion() {
   const [version, _setVersion] = useState('')
   const [needCheckUpdate, setNeedCheckUpdate] = useState(false)
   const remoteConfig = useAtomValue(remoteConfigAtom)
-  const isExceeded = useMemo(
-    () =>
-      CHATBOX_BUILD_PLATFORM === 'ios' &&
-      Date.now() - getInitialTime() < 24 * 3600 * 1000 &&
-      version &&
-      remoteConfig.current_version &&
-      compareVersions(version, remoteConfig.current_version) === 1,
-    [version, remoteConfig]
-  )
+  const isExceeded = false
   const updateCheckTimer = useRef<NodeJS.Timeout>()
   useEffect(() => {
     const handler = async () => {

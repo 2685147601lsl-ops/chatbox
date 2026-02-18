@@ -8,17 +8,13 @@ import { streamText } from 'ai'
 import AbstractAISDKModel from '../../../models/abstract-ai-sdk'
 import type { CallChatCompletionOptions, ModelInterface } from '../../../models/types'
 import { getChatboxAPIOrigin } from '../../../request/chatboxai_pool'
-import type { ChatboxAILicenseDetail, ProviderModelInfo } from '../../../types'
+import type { ProviderModelInfo } from '../../../types'
 import type { ModelDependencies } from '../../../types/adapters'
 
 interface Options {
-  licenseKey?: string
   model: ProviderModelInfo
-  licenseInstances?: {
-    [key: string]: string
-  }
-  licenseDetail?: ChatboxAILicenseDetail
   language: string
+
   dalleStyle: 'vivid' | 'natural'
   temperature?: number
   topP?: number
@@ -53,15 +49,11 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
   }
 
   protected getProvider(options: CallChatCompletionOptions) {
-    const license = this.options.licenseKey || ''
-    const instanceId = (this.options.licenseInstances ? this.options.licenseInstances[license] : '') || ''
     if (this.options.model.apiStyle === 'google') {
       const provider = createGoogleGenerativeAI({
-        apiKey: this.options.licenseKey || '',
+        apiKey: '',
         baseURL: `${getChatboxAPIOrigin()}/gateway/google-ai-studio/v1beta`,
         headers: {
-          'Instance-Id': instanceId,
-          Authorization: `Bearer ${this.options.licenseKey || ''}`,
           'chatbox-session-id': options.sessionId,
         },
         fetch: this.chatboxAIFetch.bind(this),
@@ -70,10 +62,9 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
     } else {
       const provider = createOpenAICompatible({
         name: 'ChatboxAI',
-        apiKey: this.options.licenseKey || '',
+        apiKey: '',
         baseURL: `${getChatboxAPIOrigin()}/gateway/openai/v1`,
         headers: {
-          'Instance-Id': instanceId,
           'chatbox-session-id': options.sessionId || '',
         },
         fetch: this.chatboxAIFetch.bind(this),
@@ -142,7 +133,7 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
         responseModalities: ['TEXT', 'IMAGE'],
       }
       if (params.aspectRatio && params.aspectRatio !== 'auto') {
-        providerOptions.imageConfig = { aspectRatio: params.aspectRatio }
+        providerOptions.imageConfig = { aspectRatio: params.aspectRatio as any }
       }
 
       const result = streamText({
@@ -166,15 +157,10 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
   }
 
   private getGoogleProvider(): GoogleGenerativeAIProvider {
-    const license = this.options.licenseKey || ''
-    const instanceId = (this.options.licenseInstances ? this.options.licenseInstances[license] : '') || ''
     return createGoogleGenerativeAI({
-      apiKey: this.options.licenseKey || '',
+      apiKey: '',
       baseURL: `${getChatboxAPIOrigin()}/gateway/google-ai-studio/v1beta`,
-      headers: {
-        'Instance-Id': instanceId,
-        Authorization: `Bearer ${this.options.licenseKey || ''}`,
-      },
+      headers: {},
       fetch: this.chatboxAIFetch.bind(this),
     })
   }
@@ -209,13 +195,9 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
     aspectRatio?: string,
     signal?: AbortSignal
   ): Promise<string> {
-    const license = this.options.licenseKey || ''
-    const instanceId = (this.options.licenseInstances ? this.options.licenseInstances[license] : '') || ''
     const modelId = this.options.model.modelId
     const res = await this.chatboxAIFetch(`${getChatboxAPIOrigin()}/api/ai/paint`, {
       headers: {
-        Authorization: `Bearer ${license}`,
-        'Instance-Id': instanceId,
         'Content-Type': 'application/json',
       },
       method: 'POST',

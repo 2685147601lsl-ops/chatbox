@@ -3,6 +3,7 @@ import type { Config, ProviderModelInfo, SessionSettings, Settings } from '../ty
 import type { ModelDependencies } from '../types/adapters'
 // ChatboxAI must be imported first to ensure it appears at the top of provider lists
 // Import order determines display order in UI (side-effect registration into Map)
+import './definitions/steward'
 import './definitions/chatboxai'
 import './definitions/openai'
 import './definitions/openai-responses'

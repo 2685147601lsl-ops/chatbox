@@ -43,9 +43,9 @@ export function RouteComponent() {
               defaultChatModel:
                 provider && model
                   ? {
-                      provider,
-                      model,
-                    }
+                    provider,
+                    model,
+                  }
                   : undefined,
             })
           }}
@@ -78,9 +78,9 @@ export function RouteComponent() {
               threadNamingModel:
                 provider && model
                   ? {
-                      provider,
-                      model,
-                    }
+                    provider,
+                    model,
+                  }
                   : undefined,
             })
           }
@@ -113,9 +113,9 @@ export function RouteComponent() {
               searchTermConstructionModel:
                 provider && model
                   ? {
-                      provider,
-                      model,
-                    }
+                    provider,
+                    model,
+                  }
                   : undefined,
             })
           }
@@ -137,7 +137,7 @@ export function RouteComponent() {
         <ModelSelector
           position="bottom-start"
           showAuto={true}
-          autoText={settings.licenseKey ? t('Auto (Use Chatbox AI)')! : t('None')!}
+          autoText={t('None')!}
           width={320}
           modelFilter={(model) => model.capabilities?.includes('vision') ?? false}
           selectedProviderId={settings.ocrModel?.provider}
@@ -148,15 +148,15 @@ export function RouteComponent() {
               ocrModel:
                 provider && model
                   ? {
-                      provider,
-                      model,
-                    }
+                    provider,
+                    model,
+                  }
                   : undefined,
             })
           }
         >
           <ModelSelectContent
-            autoText={settings.licenseKey ? t('Auto (Use Chatbox AI)')! : t('None')!}
+            autoText={t('None')!}
             provider={settings.ocrModel?.provider}
             model={settings.ocrModel?.model}
           />
@@ -182,10 +182,10 @@ const ModelSelectContent = forwardRef<
       !provider || !model
         ? autoText || t('Auto')
         : ([...SystemProviders(), ...(customProviders || [])].find((p) => p.id === provider)?.name || provider) +
-          '/' +
-          ((
-            providers?.[provider]?.models || SystemProviders().find((p) => p.id === provider)?.defaultSettings?.models
-          )?.find((m) => m.modelId === model)?.nickname || model),
+        '/' +
+        ((
+          providers?.[provider]?.models || SystemProviders().find((p) => p.id === provider)?.defaultSettings?.models
+        )?.find((m) => m.modelId === model)?.nickname || model),
     [provider, model, autoText, t, customProviders, providers]
   )
   return (
