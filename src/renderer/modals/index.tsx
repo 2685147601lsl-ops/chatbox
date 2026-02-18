@@ -13,6 +13,7 @@ import ModelEdit from './ModelEdit'
 import ReportContent from './ReportContent'
 import SessionSettings from './SessionSettings'
 import ThreadNameEdit from './ThreadNameEdit'
+import VideoDownloadModal from './VideoDownloadModal'
 import Welcome from './Welcome'
 
 NiceModal.register('welcome', Welcome)
@@ -30,3 +31,4 @@ NiceModal.register('report-content', ReportContent)
 NiceModal.register('model-edit', ModelEdit)
 NiceModal.register('thread-name-edit', ThreadNameEdit)
 NiceModal.register('edgeone-deploy-success', EdgeOneDeploySuccess)
+NiceModal.register('video-download-modal', VideoDownloadModal)

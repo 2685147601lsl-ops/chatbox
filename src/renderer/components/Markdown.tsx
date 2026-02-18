@@ -65,6 +65,7 @@ import IconDart from './icons/Dart'
 import IconJava from './icons/Java'
 import { MessageMermaid, SVGPreview } from './Mermaid'
 import { ScalableIcon } from './common/ScalableIcon'
+import { VideoRenderer } from '@/components/VideoRenderer'
 
 const CODE_BLOCK_COLLAPSE_LINE_THRESHOLD = 7
 
@@ -143,12 +144,10 @@ function Markdown(props: {
             />
           ),
           video: (props: any) => (
-            <video
+            <VideoRenderer
               {...props}
-              poster={props.poster ? sanitizeUrl(props.poster) : undefined}
               className="max-w-full rounded-lg shadow-sm mt-2"
               style={{ maxHeight: '400px' }}
-              controls
             />
           ),
           source: (props: any) => (

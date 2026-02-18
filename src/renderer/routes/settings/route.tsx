@@ -42,6 +42,11 @@ const ITEMS = [
     label: 'MCP',
     icon: <IconCircleDottedLetterM className="w-full h-full" />,
   },
+  {
+    key: 'skills',
+    label: 'Agent Skills',
+    icon: <IconSparkles className="w-full h-full" />,
+  },
   ...(featureFlags.knowledgeBase
     ? [
       {

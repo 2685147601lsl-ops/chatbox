@@ -208,6 +208,41 @@ export async function generate(
 
         const mcpMode = uiStore.getState().inputBoxMcpModeMap[sessionId] || 'auto'
         const forcedTools = uiStore.getState().inputBoxForceToolsMap[sessionId] || []
+        const enabledSkillIds = uiStore.getState().inputBoxSkillsMap[sessionId] || []
+
+        if (enabledSkillIds.length > 0) {
+          try {
+            // @ts-ignore
+            const allSkills = (await window.electronAPI?.invoke('skills:list')) as { id: string; name: string; content: string }[] || []
+            const activeSkills = allSkills.filter((s) => enabledSkillIds.includes(s.id))
+
+            if (activeSkills.length > 0) {
+              const skillsPrompt = `\n\n## Active Agent Skills\n\nThe following skills are enabled for this session. Follow their instructions carefully.\n\n${activeSkills.map((s) => `### ${s.name}\n${s.content}`).join('\n\n')}`
+
+              if (promptMsgs.length > 0 && promptMsgs[0].role === 'system') {
+                const sysMsg = promptMsgs[0]
+                const existingTextPart = sysMsg.contentParts?.find((p) => p.type === 'text')
+                const existingText = existingTextPart?.text || ''
+
+                // Create new content parts
+                const newContentParts = (sysMsg.contentParts || []).map((p) =>
+                  p.type === 'text' ? { ...p, text: existingText + skillsPrompt } : p
+                )
+
+                // If no text part found (unlikely for system msg), append one
+                if (!existingTextPart) {
+                  newContentParts.push({ type: 'text', text: skillsPrompt })
+                }
+
+                promptMsgs[0] = { ...sysMsg, contentParts: newContentParts }
+              } else {
+                promptMsgs.unshift(createMessage('system', skillsPrompt))
+              }
+            }
+          } catch (e) {
+            console.error('Failed to inject skills:', e)
+          }
+        }
 
         const { result } = await streamText(model, {
           sessionId: session.id,

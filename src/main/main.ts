@@ -785,3 +785,142 @@ ipcMain.handle('mcp:browser:control', async (event, { url, action, script }) => 
     offscreenWindow.close()
   }
 })
+
+// --- Agent Skills Support ---
+
+let checkedPaths: string[] = []
+
+async function resolveSkillsDir() {
+  const fs = await import('fs/promises')
+  checkedPaths = []
+  const candidatePaths = [
+    path.join(process.cwd(), '.agent/skills'),
+    // Hardcoded path from user context
+    'c:\\Users\\86132\\Desktop\\一些有用的\\chatbox\\.agent\\skills',
+    path.join(app.getAppPath(), '.agent/skills'),
+    path.join(app.getAppPath(), '../.agent/skills'),
+    path.join(app.getAppPath(), '../../.agent/skills'),
+  ]
+
+  for (const p of candidatePaths) {
+    checkedPaths.push(p)
+    try {
+      await fs.access(p)
+      return p
+    } catch {
+      continue
+    }
+  }
+
+  return path.join(process.cwd(), '.agent/skills')
+}
+
+ipcMain.handle('skills:list', async () => {
+  try {
+    const fs = await import('fs/promises')
+    const skillsDir = await resolveSkillsDir()
+
+    try {
+      await fs.access(skillsDir)
+    } catch {
+      // Return a debug skill to help troubleshoot
+      return [{
+        id: 'debug-error',
+        name: 'Debug: No Skills Found',
+        description: `Searched in: ${checkedPaths.join(' | ')}. CWD: ${process.cwd()}. AppPath: ${app.getAppPath()}`,
+        content: 'Please check the directory structure.',
+        path: ''
+      }]
+    }
+
+    const entries = await fs.readdir(skillsDir, { withFileTypes: true })
+    const skills = []
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const skillPath = path.join(skillsDir, entry.name, 'SKILL.md')
+        try {
+          const content = await fs.readFile(skillPath, 'utf-8')
+          // Simple frontmatter parsing
+          const nameMatch = content.match(/^name:\s*(.+)$/m)
+          const descMatch = content.match(/^description:\s*(.+)$/m)
+
+          skills.push({
+            id: entry.name,
+            name: nameMatch ? nameMatch[1].trim() : entry.name,
+            description: descMatch ? descMatch[1].trim() : '',
+            content,
+            path: skillPath
+          })
+        } catch (e) {
+          // Skip if SKILL.md doesn't exist or can't be read
+          console.warn(`Skipping skill ${entry.name}:`, e)
+        }
+      }
+    }
+
+    if (skills.length === 0) {
+      return [{
+        id: 'debug-empty',
+        name: 'Debug: Directory Empty',
+        description: `Found directory ${skillsDir} but no valid skills.`,
+        content: 'Please checked subdirectory structure.',
+        path: skillsDir
+      }]
+    }
+
+    return skills
+  } catch (error) {
+    console.error('Failed to list skills:', error)
+    return [{
+      id: 'debug-crash',
+      name: 'Debug: Crash',
+      description: String(error),
+      content: '',
+      path: ''
+    }]
+  }
+})
+
+ipcMain.handle('skills:save', async (event, { id, content }) => {
+  try {
+    const fs = await import('fs/promises')
+
+    // Ensure parent directory exists. Use resolved path.
+    // If it doesn't exist yet, we default to the first candidate usually (cwd/.agent/skills)
+    let skillsDir = await resolveSkillsDir()
+
+    // If resolveSkillsDir returned a path that doesn't exist (default fallback), we need to create it
+    try {
+      await fs.access(skillsDir)
+    } catch {
+      // If it doesn't exist, checking if we should create it in CWD or App Path
+      // Just use the returned path (likely cwd/.agent/skills)
+      await fs.mkdir(skillsDir, { recursive: true })
+    }
+
+    const skillDir = path.join(skillsDir, id)
+    const skillPath = path.join(skillDir, 'SKILL.md')
+
+    await fs.mkdir(skillDir, { recursive: true })
+    await fs.writeFile(skillPath, content, 'utf-8')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to save skill:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('skills:delete', async (event, id) => {
+  try {
+    const fs = await import('fs/promises')
+    const skillsDir = await resolveSkillsDir()
+    const skillDir = path.join(skillsDir, id)
+
+    await fs.rm(skillDir, { recursive: true, force: true })
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to delete skill:', error)
+    throw error
+  }
+})

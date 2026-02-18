@@ -36,6 +36,7 @@ import {
   IconPlayerStopFilled,
   IconPlus,
   IconSettings,
+  IconSparkles,
   IconVocabulary,
   IconWorldWww,
 } from '@tabler/icons-react'
@@ -93,6 +94,7 @@ import ProviderImageIcon from '../icons/ProviderImageIcon'
 import KnowledgeBaseMenu from '../knowledge-base/KnowledgeBaseMenu'
 import ModelSelector from '../ModelSelector'
 import MCPMenu from '../mcp/MCPMenu'
+import SkillsMenu from '../skills/SkillsMenu'
 import { FileMiniCard, ImageMiniCard, LinkMiniCard } from './Attachments'
 import { ImageUploadInput } from './ImageUploadInput'
 import {
@@ -1060,6 +1062,27 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                     </UnstyledButton>
                   )}
                 </MCPMenu>
+
+                <SkillsMenu sessionId={currentSessionId || 'new'}>
+                  {(enabledSkillsCount) => (
+                    <UnstyledButton className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors">
+                      <IconSparkles
+                        size={toolbarIconSize}
+                        strokeWidth={1.8}
+                        className={
+                          enabledSkillsCount > 0
+                            ? 'text-[var(--chatbox-tint-brand)]'
+                            : 'text-[var(--chatbox-tint-secondary)]'
+                        }
+                      />
+                      {enabledSkillsCount > 0 && (
+                        <Text size="xs" className="text-[var(--chatbox-tint-brand)] font-bold">
+                          {enabledSkillsCount}
+                        </Text>
+                      )}
+                    </UnstyledButton>
+                  )}
+                </SkillsMenu>
 
 
                 {!isSmallScreen &&

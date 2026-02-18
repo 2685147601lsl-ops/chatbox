@@ -27,10 +27,12 @@ export const fetchTool = tool({
                 }
             })
             const text = await response.text()
-            if (text.length > 50000) {
-                return text.slice(0, 50000) + '... (truncated)'
+            let content = text
+            if (content.length > 50000) {
+                content = content.slice(0, 50000) + '... (truncated)'
             }
-            return text
+            // Wrap in code block to prevent HTML rendering issues in chat UI
+            return '```html\n' + content + '\n```'
         } catch (error) {
             return `Error fetching URL: ${(error as Error).message}`
         }
@@ -133,7 +135,9 @@ export const browserTool = tool({
         try {
             const response = await fetchWithProxy(url)
             const text = await response.text()
-            return note + (text.slice(0, 20000) + (text.length > 20000 ? '... (truncated)' : ''))
+            const content = text.slice(0, 20000) + (text.length > 20000 ? '... (truncated)' : '')
+            // Wrap in code block to prevent UI rendering issues
+            return note + '```html\n' + content + '\n```'
         } catch (error) {
             return note + `Fallback fetch failed: ${(error as Error).message}`
         }

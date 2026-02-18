@@ -46,6 +46,7 @@ export const uiStore = createStore(
         sidebarWidth: null as number | null, // Custom sidebar width, null means use default
         inputBoxMcpModeMap: {} as Record<string, 'auto' | 'manual' | 'disabled' | undefined>,
         inputBoxForceToolsMap: {} as Record<string, string[] | undefined>,
+        inputBoxSkillsMap: {} as Record<string, string[] | undefined>,
       },
       (set, get) => ({
         // ... previous helper methods ...
@@ -62,6 +63,14 @@ export const uiStore = createStore(
             inputBoxForceToolsMap: {
               ...state.inputBoxForceToolsMap,
               [sessionId]: tools,
+            },
+          }))
+        },
+        setInputBoxSkills: (sessionId: string, skills: string[]) => {
+          set((state) => ({
+            inputBoxSkillsMap: {
+              ...state.inputBoxSkillsMap,
+              [sessionId]: skills,
             },
           }))
         },
@@ -230,6 +239,7 @@ export const uiStore = createStore(
         sessionWebBrowsingMap: state.sessionWebBrowsingMap,
         inputBoxMcpModeMap: state.inputBoxMcpModeMap,
         inputBoxForceToolsMap: state.inputBoxForceToolsMap,
+        inputBoxSkillsMap: state.inputBoxSkillsMap,
       }),
 
       storage: safeStorage,

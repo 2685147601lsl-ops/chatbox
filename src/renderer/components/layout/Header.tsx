@@ -1,7 +1,7 @@
 import NiceModal from '@ebay/nice-modal-react'
 import { ActionIcon, Flex, Title, Tooltip } from '@mantine/core'
 import type { Session } from '@shared/types'
-import { IconLayoutSidebarLeftExpand, IconMenu2, IconPencil } from '@tabler/icons-react'
+import { IconLayoutSidebarLeftExpand, IconMenu2, IconPencil, IconVideo } from '@tabler/icons-react'
 import clsx from 'clsx'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -89,6 +89,20 @@ export default function Header(props: { session: Session }) {
               }}
             >
               <ScalableIcon icon={IconPencil} size={20} />
+            </ActionIcon>
+          </Tooltip>
+
+          <Tooltip label={t('Video Downloads')}>
+            <ActionIcon
+              className="controls"
+              variant="subtle"
+              color="chatbox-tertiary"
+              size={20}
+              onClick={() => {
+                NiceModal.show('video-download-modal', { session: currentSession })
+              }}
+            >
+              <ScalableIcon icon={IconVideo} size={20} />
             </ActionIcon>
           </Tooltip>
         </Flex>
