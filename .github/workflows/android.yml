@@ -3,6 +3,8 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master, release/* ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -37,6 +39,19 @@ jobs:
           CHATBOX_BUILD_PLATFORM: android
           NODE_OPTIONS: "--max-old-space-size=4096"
 
+      - name: Calculate Version
+        id: version
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION_NAME=${GITHUB_REF#refs/tags/}
+          else
+            VERSION_NAME="v0.0.1-${{ github.run_number }}"
+          fi
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "Computed Version: $VERSION_NAME (Code: $VERSION_CODE)"
+
       - name: Add Android Platform (if missing)
         run: |
           if [ ! -d "android" ]; then
@@ -46,14 +61,26 @@ jobs:
       - name: Capacitor Sync
         run: npx cap sync android
 
+      - name: Update Android Version
+        run: |
+          cd android/app
+          # Update versionCode using regex (matches any number)
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ env.VERSION_CODE }}/" build.gradle
+          # Update versionName using regex (matches any string inside quotes)
+          sed -i -E "s/versionName \"[^\"]+\"/versionName \"${{ env.VERSION_NAME }}\"/" build.gradle
+
       - name: Build APK (Debug)
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Rename APK
+        run: |
+          mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/chatbox-android-${{ env.VERSION_NAME }}.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: chatbox-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: chatbox-android-${{ env.VERSION_NAME }}
+          path: android/app/build/outputs/apk/debug/chatbox-android-${{ env.VERSION_NAME }}.apk
