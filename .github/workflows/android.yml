@@ -69,18 +69,40 @@ jobs:
           # Update versionName using regex (matches any string inside quotes)
           sed -i -E "s/versionName \"[^\"]+\"/versionName \"${{ env.VERSION_NAME }}\"/" build.gradle
 
-      - name: Build APK (Debug)
+      - name: Build APK (Release)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
         run: |
           cd android
+          
+          # Decode keystore
+          echo $KEYSTORE_BASE64 | base64 -d > app/release.keystore
+          
+          # Create keystore.properties
+          echo "storePassword=$STORE_PASSWORD" > keystore.properties
+          echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
+          echo "keyAlias=$KEY_ALIAS" >> keystore.properties
+          echo "storeFile=release.keystore" >> keystore.properties
+          
+          # Configure build.gradle to use signing config (if needed) or pass props via command line
+          # For Capacitor/Standard Android projects, we can often pass these as project properties
+          
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore \
+            -Pandroid.injected.signing.store.password=$STORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
 
       - name: Rename APK
         run: |
-          mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/chatbox-android-${{ env.VERSION_NAME }}.apk
+          mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/chatbox-android-${{ env.VERSION_NAME }}.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: chatbox-android-${{ env.VERSION_NAME }}
-          path: android/app/build/outputs/apk/debug/chatbox-android-${{ env.VERSION_NAME }}.apk
+          path: android/app/build/outputs/apk/release/chatbox-android-${{ env.VERSION_NAME }}.apk
