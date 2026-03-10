@@ -29,7 +29,10 @@ public class ScreenshotHelper {
     private int height;
     private int density;
 
+    private Context context;
+
     public ScreenshotHelper(Context context) {
+        this.context = context;
         projectionManager = (MediaProjectionManager) context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         DisplayMetrics metrics = new DisplayMetrics();
@@ -49,8 +52,16 @@ public class ScreenshotHelper {
     }
 
     public void startProjectionAndTakeScreenshot(int resultCode, Intent resultData, ScreenshotCallback callback) {
+        Intent serviceIntent = new Intent(context, ScreenCaptureService.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent);
+        } else {
+            context.startService(serviceIntent);
+        }
+
         mediaProjection = projectionManager.getMediaProjection(resultCode, resultData);
         if (mediaProjection == null) {
+            context.stopService(serviceIntent);
             callback.onError("Failed to get MediaProjection");
             return;
         }
@@ -124,5 +135,6 @@ public class ScreenshotHelper {
             mediaProjection.stop();
             mediaProjection = null;
         }
+        context.stopService(new Intent(context, ScreenCaptureService.class));
     }
 }
