@@ -559,41 +559,65 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
     }
 
     // INTERCEPT TOOL RESULTS TO PREVENT TOKEN OVERFLOW FROM BASE64 IMAGES
+    // We scan all messages (especially user messages) because Chatbox squashes historical tool results into text.
     baseModel = wrapLanguageModel({
       model: baseModel,
       middleware: {
-        wrapGenerate: async ({ params, next }) => {
+        specificationVersion: 'v3',
+        transformParams: async ({ params }) => {
           for (const msg of params.prompt) {
-             if (msg.role === 'tool' && Array.isArray(msg.content)) {
+             if (Array.isArray(msg.content)) {
+                const newContent: any[] = [];
                 for (const contentPart of msg.content) {
-                   if (contentPart.type === 'tool-result' && contentPart.output) {
-                      const output = contentPart.output;
-                      // Vercel AI SDK might wrap string returns in json or text type.
+                   if (contentPart.type === 'text') {
+                       const text = contentPart.text;
+                       // Extract base64 images from text block (e.g. squashed tool results)
+                       const regex = /\[Image Data: data:([^;]+);base64,([^\]]+)\]/gs;
+                       let lastIndex = 0;
+                       let match;
+                       while ((match = regex.exec(text)) !== null) {
+                           if (match.index > lastIndex) {
+                               newContent.push({ type: 'text', text: text.substring(lastIndex, match.index) });
+                           }
+                           newContent.push({
+                               type: 'file', // Convert to multimodal file part
+                               mediaType: match[1],
+                               data: match[2]
+                           });
+                           lastIndex = regex.lastIndex;
+                       }
+                       if (lastIndex < text.length) {
+                           newContent.push({ type: 'text', text: text.substring(lastIndex) });
+                       }
+                   } else if (contentPart.type === 'tool-result' && contentPart.output) {
+                      // Fallback: If Vercel AI SDK executed it natively in the current turn
+                      const output = contentPart.output as any;
                       let rawString = null;
                       if (output.type === 'text' && typeof output.value === 'string') {
                           rawString = output.value;
                       } else if (output.type === 'json' && typeof output.value === 'string') {
                           rawString = output.value;
                       }
-
                       if (rawString && rawString.startsWith('[Image Data: data:image/')) {
-                         const match = rawString.match(/^\[Image Data: data:([^;]+);base64,(.*)\]$/);
+                         const match = rawString.match(/^\[Image Data: data:([^;]+);base64,(.*)\]$/s);
                          if (match) {
-                             const mediaType = match[1];
-                             const base64 = match[2];
                              contentPart.output = {
                                 type: 'content',
                                 value: [
-                                   { type: 'image-data', data: base64, mediaType }
+                                   { type: 'image-data', mediaType: match[1], data: match[2] }
                                 ]
-                             };
+                             } as any;
                          }
                       }
+                      newContent.push(contentPart);
+                   } else {
+                       newContent.push(contentPart);
                    }
                 }
+                msg.content = newContent as any;
              }
           }
-          return next({ ...params });
+          return params;
         }
       }
     })
