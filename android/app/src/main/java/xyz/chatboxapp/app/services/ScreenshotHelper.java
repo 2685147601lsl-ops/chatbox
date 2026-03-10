@@ -59,67 +59,76 @@ public class ScreenshotHelper {
             context.startService(serviceIntent);
         }
 
-        mediaProjection = projectionManager.getMediaProjection(resultCode, resultData);
-        if (mediaProjection == null) {
-            context.stopService(serviceIntent);
-            callback.onError("Failed to get MediaProjection");
-            return;
-        }
-
-        imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2);
-        virtualDisplay = mediaProjection.createVirtualDisplay("ScreenCapture",
-                width, height, density,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                imageReader.getSurface(), null, null);
-
-        imageReader.setOnImageAvailableListener(reader -> {
-            Image image = null;
-            try {
-                image = reader.acquireLatestImage();
-                if (image != null) {
-                    Image.Plane[] planes = image.getPlanes();
-                    ByteBuffer buffer = planes[0].getBuffer();
-                    int pixelStride = planes[0].getPixelStride();
-                    int rowStride = planes[0].getRowStride();
-                    int rowPadding = rowStride - pixelStride * width;
-
-                    Bitmap bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
-                    bitmap.copyPixelsFromBuffer(buffer);
-                    
-                    // Crop the padding if necessary
-                    Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height);
-
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    // Compress significantly to save memory/tokens when sending to LLM
-                    croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream);
-                    String base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP);
-                    
-                    callback.onScreenshotTaken(base64);
-
-                    // Cleanup immediately to avoid memory leaks
-                    stopProjection();
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error processing screenshot", e);
-                callback.onError(e.getMessage());
-                stopProjection();
-            } finally {
-                if (image != null) {
-                    image.close();
-                }
-                // clear listener so we only get one frame
-                imageReader.setOnImageAvailableListener(null, null); 
-            }
-        }, new android.os.Handler(android.os.Looper.getMainLooper()));
-
-        // Add a 3-second timeout fallback in case the screen is perfectly static and no frame is emitted.
+        // Give the ScreenCaptureService a little time to call startForeground() to avoid Android 14 SecurityException
         new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            if (mediaProjection != null) {
-                // If mediaProjection is not null after 3s, the callback hasn't finished.
-                callback.onError("Screenshot capture timed out. The screen might be completely static or permission was lost.");
-                stopProjection();
+            try {
+                mediaProjection = projectionManager.getMediaProjection(resultCode, resultData);
+                if (mediaProjection == null) {
+                    context.stopService(serviceIntent);
+                    callback.onError("Failed to get MediaProjection. It returned null.");
+                    return;
+                }
+
+                imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2);
+                virtualDisplay = mediaProjection.createVirtualDisplay("ScreenCapture",
+                        width, height, density,
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                        imageReader.getSurface(), null, null);
+
+                imageReader.setOnImageAvailableListener(reader -> {
+                    Image image = null;
+                    try {
+                        image = reader.acquireLatestImage();
+                        if (image != null) {
+                            Image.Plane[] planes = image.getPlanes();
+                            ByteBuffer buffer = planes[0].getBuffer();
+                            int pixelStride = planes[0].getPixelStride();
+                            int rowStride = planes[0].getRowStride();
+                            int rowPadding = rowStride - pixelStride * width;
+
+                            Bitmap bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
+                            bitmap.copyPixelsFromBuffer(buffer);
+                            
+                            // Crop the padding if necessary
+                            Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height);
+
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            // Compress significantly to save memory/tokens when sending to LLM
+                            croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream);
+                            String base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP);
+                            
+                            callback.onScreenshotTaken(base64);
+
+                            // Cleanup immediately to avoid memory leaks
+                            stopProjection();
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing screenshot", e);
+                        callback.onError(e.getMessage());
+                        stopProjection();
+                    } finally {
+                        if (image != null) {
+                            image.close();
+                        }
+                        // clear listener so we only get one frame
+                        imageReader.setOnImageAvailableListener(null, null); 
+                    }
+                }, new android.os.Handler(android.os.Looper.getMainLooper()));
+
+                // Add a 3-second timeout fallback in case the screen is perfectly static and no frame is emitted.
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    if (mediaProjection != null) {
+                        // If mediaProjection is not null after 3s, the callback hasn't finished.
+                        callback.onError("Screenshot capture timed out. The screen might be completely static or permission was lost.");
+                        stopProjection();
+                    }
+                }, 3000);
+
+            } catch (Exception exception) {
+                context.stopService(serviceIntent);
+                callback.onError("MediaProjection exception: " + exception.getMessage());
             }
-        }, 3000);
+        }, 400); // 400ms delay to ensure foreground service is running
     }
 
     private void stopProjection() {

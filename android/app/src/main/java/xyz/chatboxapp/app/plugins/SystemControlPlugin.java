@@ -78,10 +78,27 @@ public class SystemControlPlugin extends Plugin {
          call.resolve(ret);
     }
     
+    private boolean isAccessibilityServiceEnabled() {
+        android.view.accessibility.AccessibilityManager am = (android.view.accessibility.AccessibilityManager) getContext().getSystemService(android.content.Context.ACCESSIBILITY_SERVICE);
+        if (am == null) return false;
+        java.util.List<android.accessibilityservice.AccessibilityServiceInfo> enabledServices = am.getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+        for (android.accessibilityservice.AccessibilityServiceInfo enabledService : enabledServices) {
+            android.content.pm.ServiceInfo enabledServiceInfo = enabledService.getResolveInfo().serviceInfo;
+            if (enabledServiceInfo.packageName.equals(getContext().getPackageName()) && enabledServiceInfo.name.equals(xyz.chatboxapp.app.services.ChatboxAccessibilityService.class.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @PluginMethod
     public void simulateClick(PluginCall call) {
          if (xyz.chatboxapp.app.services.ChatboxAccessibilityService.instance == null) {
-              call.reject("Accessibility Service is not running or enabled. Please prompt the user to enable it.");
+              if (isAccessibilityServiceEnabled()) {
+                  call.reject("Accessibility Service is enabled in system but memory instance is missing. Please toggle it OFF and ON again in Android Settings.");
+              } else {
+                  call.reject("Accessibility Service is not running or enabled. Please prompt the user to enable it.");
+              }
               return;
          }
          
@@ -111,7 +128,11 @@ public class SystemControlPlugin extends Plugin {
     @PluginMethod
     public void inputText(PluginCall call) {
         if (xyz.chatboxapp.app.services.ChatboxAccessibilityService.instance == null) {
-              call.reject("Accessibility Service is not running or enabled. Please prompt the user to enable it.");
+              if (isAccessibilityServiceEnabled()) {
+                  call.reject("Accessibility Service is enabled in system but memory instance is missing. Please toggle it OFF and ON again in Android Settings.");
+              } else {
+                  call.reject("Accessibility Service is not running or enabled. Please prompt the user to enable it.");
+              }
               return;
          }
          String text = call.getString("text");
