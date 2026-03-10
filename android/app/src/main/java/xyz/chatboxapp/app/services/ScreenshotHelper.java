@@ -99,7 +99,16 @@ public class ScreenshotHelper {
                 // clear listener so we only get one frame
                 imageReader.setOnImageAvailableListener(null, null); 
             }
-        }, null);
+        }, new android.os.Handler(android.os.Looper.getMainLooper()));
+
+        // Add a 3-second timeout fallback in case the screen is perfectly static and no frame is emitted.
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            if (mediaProjection != null) {
+                // If mediaProjection is not null after 3s, the callback hasn't finished.
+                callback.onError("Screenshot capture timed out. The screen might be completely static or permission was lost.");
+                stopProjection();
+            }
+        }, 3000);
     }
 
     private void stopProjection() {

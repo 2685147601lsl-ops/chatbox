@@ -50,6 +50,7 @@
     </application>
 
     <!-- Permissions for System Control -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
