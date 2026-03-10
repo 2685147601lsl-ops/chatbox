@@ -1,4 +1,4 @@
-import { ActionIcon, Anchor, Badge, Flex, Paper, SimpleGrid, Switch, Text } from '@mantine/core'
+import { ActionIcon, Anchor, Badge, Flex, Paper, SimpleGrid, Switch, Text, Divider, Tooltip, Box } from '@mantine/core'
 import { spotlight } from '@mantine/spotlight'
 import { IconPlus } from '@tabler/icons-react'
 import { type FC, useCallback, useEffect, useState } from 'react'
@@ -180,6 +180,26 @@ const CustomServersSection: FC<Props> = (props) => {
         onSave={handleServerUpdate}
         onDelete={handleServerDelete}
       />
+      
+      <Divider my="lg" />
+      <Flex justify="space-between" align="center" mb={12}>
+        <Box>
+          <Text size="sm" fw={600}>
+            {t('Always include tool results in conversational context')}
+          </Text>
+          <Text size="xs" c="chatbox-tertiary">
+            {t('By default, Chatbox drops large MCP tool return results (like images or long text) from history to save tokens. Enable this if you strictly need models to remember previous tool interactions.')}
+          </Text>
+        </Box>
+        <Switch
+          checked={mcpSettings.alwaysIncludeToolResultsInContext || false}
+          onChange={(e) => {
+            setSettings((draft) => {
+              draft.mcp.alwaysIncludeToolResultsInContext = e.currentTarget.checked;
+            })
+          }}
+        />
+      </Flex>
     </>
   )
 }

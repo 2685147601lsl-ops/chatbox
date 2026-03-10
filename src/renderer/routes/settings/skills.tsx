@@ -62,7 +62,7 @@ Instructions for the skill...
     }
 
     const handleDelete = async (id: string) => {
-        if (confirm(t('Are you sure you want to delete this skill?'))) {
+        if (confirm(t('Are you sure you want to delete this skill?') as string)) {
             await deleteSkill.mutateAsync(id)
         }
     }

@@ -10,6 +10,7 @@ interface RequestOptions {
   signal?: AbortSignal
   retry?: number
   useProxy?: boolean
+  forceCorsProxy?: boolean
 }
 
 async function retryRequest<T>(fn: () => Promise<T>, retry: number, url: string): Promise<T> {
@@ -26,7 +27,7 @@ async function retryRequest<T>(fn: () => Promise<T>, retry: number, url: string)
       let origin = 'unknown'
       try {
         origin = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost').origin
-      } catch {}
+      } catch { }
       requestError = e instanceof BaseError ? e : new NetworkError((e as Error).message, origin)
 
       if (i < retry) {
@@ -40,9 +41,12 @@ async function retryRequest<T>(fn: () => Promise<T>, retry: number, url: string)
 
 function buildHeaders(options: RequestOptions, url: string): Headers {
   const headers = new Headers(options.headers)
-  headers.set('Content-Type', 'application/json')
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
 
-  if (options.useProxy && !isLocalHost(url) && platform.type !== 'mobile') {
+  const shouldUseProxy = (options.useProxy && platform.type !== 'mobile') || options.forceCorsProxy
+  if (shouldUseProxy && !isLocalHost(url)) {
     headers.set('CHATBOX-TARGET-URI', url)
     headers.set('CHATBOX-PLATFORM', platform.type)
   }
@@ -55,7 +59,8 @@ async function doRequest(url: string, options: RequestOptions): Promise<Response
   let requestUrl = url
   const headers = buildHeaders(options, url)
 
-  if (useProxy && !isLocalHost(url) && platform.type !== 'mobile') {
+  const shouldUseProxy = (useProxy && platform.type !== 'mobile') || options.forceCorsProxy
+  if (shouldUseProxy && !isLocalHost(url)) {
     const version = await platform.getVersion()
     headers.set('CHATBOX-VERSION', version || 'unknown')
     requestUrl = 'https://cors-proxy.chatboxai.app/proxy-api/completions'
@@ -99,5 +104,6 @@ export async function fetchWithProxy(input: RequestInfo | URL, init?: RequestIni
     body: init?.body,
     signal: init?.signal || undefined,
     useProxy: true,
+    forceCorsProxy: true,
   })
 }

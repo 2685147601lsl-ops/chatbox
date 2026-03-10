@@ -108,6 +108,7 @@ import {
   storeLinkPromise,
 } from './preprocessState'
 import TokenCountMenu from './TokenCountMenu'
+import type { PreConstructedMessageState } from '@/types/input-box'
 
 export type InputBoxPayload = {
   constructedMessage: Message
@@ -196,7 +197,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     // Pre-constructed message state (scoped by session)
     const [preConstructedMessage, setPreConstructedMessage] = useAtom(
       atoms.inputBoxPreConstructedMessageFamily(currentSessionId || 'new')
-    )
+    ) as unknown as [PreConstructedMessageState, React.Dispatch<React.SetStateAction<PreConstructedMessageState>>]
     const pictureKeys = preConstructedMessage.pictureKeys || []
     const attachments = preConstructedMessage.attachments || []
 

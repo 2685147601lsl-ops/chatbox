@@ -218,7 +218,11 @@ export async function streamText(
       })
     }
 
-    coreMessages = await convertToModelMessages(messages, { modelSupportVision: model.isSupportVision() })
+    const appSettings = settingsStore.getState().getSettings()
+    coreMessages = await convertToModelMessages(messages, { 
+      modelSupportVision: model.isSupportVision(),
+      keepToolResults: appSettings.mcp?.alwaysIncludeToolResultsInContext || false
+    })
 
     // 3. handle model not support tool use scenarios
     if (kbNotSupported || webNotSupported) {

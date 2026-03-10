@@ -11,21 +11,23 @@ export function nameConversation(msgs: Message[], language: string): Message[] {
         {
           type: 'text',
           text: `Based on the chat history, give this conversation a name.
-Keep it short - 10 words max, no quotes.
+Keep it short - 15 characters max, no quotes.
+IMPORTANT: Never use code blocks, markdown tags, or HTML tags (like <img> or <br>) in the name.
+If the conversation involves generating an image, video, or code, summarize the user's intent in natural language (e.g., "Cat Picture" or "Python Script").
 Use ${language}.
 Just provide the name, nothing else.
 
 Here's the conversation:
 
 \`\`\`
-${
-  format(msgs.slice(0, 5).map((msg) => getMessageText(msg, true, false).slice(0, 100))) // 限制长度以节省 tokens
-}
+${format(msgs.slice(0, 5).map((msg) => getMessageText(msg, true, false).slice(0, 300))) // 稍微增加截取长度，以便能够正确理解完整意图
+            }
 \`\`\`
 
-Name this conversation in 10 characters or less.
+Name this conversation in 15 characters or less.
+Never include "<" or "!" or any code in the name.
 Use ${language}.
-Only give the name, nothing else.
+Only give the true name in natural language, nothing else.
 
 The name is:`,
         },

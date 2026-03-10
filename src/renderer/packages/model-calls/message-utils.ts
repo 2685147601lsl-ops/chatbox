@@ -71,7 +71,7 @@ async function convertAssistantContentParts(
 
 export async function convertToModelMessages(
   messages: Message[],
-  options?: { modelSupportVision: boolean }
+  options?: { modelSupportVision: boolean; keepToolResults?: boolean }
 ): Promise<ModelMessage[]> {
   const dependencies = await createModelDependencies()
   const results = await Promise.all(
@@ -96,8 +96,16 @@ export async function convertToModelMessages(
             content: await convertAssistantContentParts(contentParts, dependencies),
           }
         }
-        case 'tool':
+        case 'tool': {
+          if (options?.keepToolResults) {
+             const contentParts = await convertUserContentParts(m.contentParts || [], dependencies, options)
+             return {
+               role: 'tool' as const,
+               content: contentParts as any, // Content structure for tool results is handled downstream by AI SDK
+             }
+          }
           return null
+        }
         default: {
           const _exhaustiveCheck: never = m.role
           throw new Error(`Unknown role: ${_exhaustiveCheck}`)

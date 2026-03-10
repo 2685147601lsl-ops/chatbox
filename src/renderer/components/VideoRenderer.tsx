@@ -1,6 +1,7 @@
 
 import { useEffect, useRef } from 'react'
 import { sanitizeUrl } from '@braintree/sanitize-url'
+import { getOS } from '@/packages/navigator'
 
 interface VideoRendererProps extends React.VideoHTMLAttributes<HTMLVideoElement> {
     src?: string
@@ -16,7 +17,9 @@ export const VideoRenderer = ({ src, poster, className, style, ...props }: Video
 
     // Pre-warm logic: Initiate connection as soon as component mounts (when URL is received)
     useEffect(() => {
-        if (!sanitizedSrc) return
+        // Skip pre-warm logic on Android to avoid fetch/blob issues
+        // The user requested to directly assign src and rely on native player
+        if (!sanitizedSrc || getOS() === 'Android') return
 
         // 1. Browser Hint: <link rel="preload">
         // This is the standard way to tell the browser "we will need this soon"
@@ -61,6 +64,8 @@ export const VideoRenderer = ({ src, poster, className, style, ...props }: Video
         }
     }, [sanitizedSrc])
 
+    const isAndroid = getOS() === 'Android'
+
     return (
         <video
             ref={videoRef}
@@ -73,7 +78,11 @@ export const VideoRenderer = ({ src, poster, className, style, ...props }: Video
             playsInline
             // Optional: muted plays faster usually, but user clicks play so sound is expected.
             className={className}
-            style={style}
+            style={{
+                // Ensure hardware acceleration is enabled on Android (WebView)
+                ...(isAndroid ? { transform: 'translateZ(0)' } : {}),
+                ...style,
+            }}
             {...props}
         />
     )

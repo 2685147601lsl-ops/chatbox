@@ -106,7 +106,7 @@ export default function MessageErrTips(props: { msg: Message }) {
       <Trans
         i18nKey="Connection to {{aiProvider}} failed. This typically occurs due to incorrect configuration or {{aiProvider}} account issues. Please <buttonOpenSettings>check your settings</buttonOpenSettings> and verify your {{aiProvider}} account status."
         values={{
-          aiProvider: msg.aiProvider ? aiProviderNameHash[msg.aiProvider] : 'AI Provider',
+          aiProvider: msg.aiProvider ? (aiProviderNameHash as any)[msg.aiProvider] : 'AI Provider',
         }}
         components={{
           buttonOpenSettings: (
@@ -138,7 +138,7 @@ export default function MessageErrTips(props: { msg: Message }) {
       <Trans
         i18nKey="ai provider no implemented paint tips"
         values={{
-          aiProvider: msg.aiProvider ? aiProviderNameHash[msg.aiProvider] : 'AI Provider',
+          aiProvider: msg.aiProvider ? (aiProviderNameHash as any)[msg.aiProvider] : 'AI Provider',
         }}
         components={[
           <Link

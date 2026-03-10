@@ -224,6 +224,7 @@ const MCPServerConfigSchema = z.object({
 const MCPSettingsSchema = z.object({
   servers: z.array(MCPServerConfigSchema),
   enabledBuiltinServers: z.array(z.string()),
+  alwaysIncludeToolResultsInContext: z.boolean().default(false),
 })
 
 export enum Theme {

@@ -62,6 +62,7 @@ function Root() {
   const spellCheck = useSettingsStore((state) => state.spellCheck)
   const language = useLanguage()
   const initialized = useRef(false)
+  useI18nEffect()
 
   const setOpenAboutDialog = useUIStore((s) => s.setOpenAboutDialog)
 
