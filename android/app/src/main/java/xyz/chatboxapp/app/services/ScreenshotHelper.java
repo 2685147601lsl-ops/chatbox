@@ -119,8 +119,10 @@ public class ScreenshotHelper {
                         if (image != null) {
                             image.close();
                         }
-                        // clear listener so we only get one frame
-                        imageReader.setOnImageAvailableListener(null, null); 
+                        // Check for null before clearing listener, as stopProjection() might have nulled it
+                        if (imageReader != null) {
+                            imageReader.setOnImageAvailableListener(null, null); 
+                        }
                     }
                 }, new android.os.Handler(android.os.Looper.getMainLooper()));
 
