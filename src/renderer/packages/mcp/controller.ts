@@ -94,10 +94,17 @@ export class MCPServer extends Emittery<{ status: MCPServerStatus }> {
     this.status = { state: 'starting' }
     try {
       if ('url' in this.transportConfig && this.transportConfig.url.startsWith('local://')) {
-        const { cherryBuiltinTools } = await import('./builtin-tools/cherry.js')
-        const serverId = this.transportConfig.url.replace('local://', '') // e.g., 'cherry/time'
-        // Handle both 'cherry/time' and '@cherry/time' formats
-        const tools = cherryBuiltinTools[serverId] || cherryBuiltinTools[`@${serverId}`]
+        let tools: ToolSet | undefined = undefined;
+        const serverId = this.transportConfig.url.replace('local://', '') // e.g., 'cherry/time' or 'system/android'
+        
+        if (serverId.startsWith('cherry/') || serverId.startsWith('@cherry/')) {
+           const { cherryBuiltinTools } = await import('./builtin-tools/cherry.js')
+           tools = cherryBuiltinTools[serverId] || cherryBuiltinTools[`@${serverId}`]
+        } else if (serverId.startsWith('system/') || serverId.startsWith('@system/')) {
+           const { androidBuiltinTools } = await import('./builtin-tools/android.js')
+           tools = androidBuiltinTools[serverId] || androidBuiltinTools[`@${serverId}`]
+        }
+
         if (tools) {
           this.tools = tools
           this.status = { state: 'running' }

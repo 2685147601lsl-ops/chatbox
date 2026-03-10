@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Chatbox</string>
+    <string name="title_activity_main">chatbox</string>
+    <string name="package_name">xyz.chatboxapp.app</string>
+    <string name="custom_url_scheme">chatboxapp</string>
+    <string name="accessibility_service_description">Chatbox System Control Plugin uses accessibility features to perform automated touches, inputs, and navigation under the supervision of the AI Assistant mode.</string>
+</resources>

@@ -43,6 +43,12 @@ export const BUILTIN_MCP_SERVERS: BuildinMCPServerConfig[] = [
     description: 'Structured thinking process for complex problem solving',
     url: 'local://cherry/sequentialthinking',
   },
+  {
+    id: '@system/android',
+    name: 'Android System Control',
+    description: 'Control your Android device naturally (open apps, tap, read SMS)',
+    url: 'local://system/android',
+  },
 ]
 
 
