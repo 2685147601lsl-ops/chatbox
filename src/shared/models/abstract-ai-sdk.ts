@@ -565,10 +565,20 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
       middleware: {
         specificationVersion: 'v3',
         transformParams: async ({ params }) => {
+          let lastUserMessageIndex = -1;
+          for (let i = params.prompt.length - 1; i >= 0; i--) {
+            if (params.prompt[i].role === 'user') {
+              lastUserMessageIndex = i;
+              break;
+            }
+          }
+
+          const extractedImages: any[] = [];
+
           for (const msg of params.prompt) {
              if (Array.isArray(msg.content)) {
                 const newContent: any[] = [];
-                for (const contentPart of msg.content) {
+                for (let contentPart of msg.content) {
                    if (contentPart.type === 'text') {
                        const text = contentPart.text;
                        // Extract base64 images from text block (e.g. squashed tool results)
@@ -579,8 +589,8 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
                            if (match.index > lastIndex) {
                                newContent.push({ type: 'text', text: text.substring(lastIndex, match.index) });
                            }
-                           newContent.push({
-                               type: 'file', // Convert to multimodal file part
+                           extractedImages.push({
+                               type: 'file', // Convert to multimodal file part (AI SDK v3 standard for images in user prompt)
                                mediaType: match[1],
                                data: match[2]
                            });
@@ -601,12 +611,12 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
                       if (rawString && rawString.startsWith('[Image Data: data:image/')) {
                          const match = rawString.match(/^\[Image Data: data:([^;]+);base64,(.*)\]$/s);
                          if (match) {
-                             contentPart.output = {
-                                type: 'content',
-                                value: [
-                                   { type: 'image-data', mediaType: match[1], data: match[2] }
-                                ]
+                             // Replace the massive tool output with a placeholder to avoid OpenAI stringifying it
+                             contentPart = { 
+                                ...contentPart, 
+                                output: { type: 'text', value: 'Screenshot captured and attached to the latest user message.' } 
                              } as any;
+                             extractedImages.push({ type: 'file', mediaType: match[1], data: match[2] });
                          }
                       }
                       newContent.push(contentPart);
@@ -615,6 +625,18 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
                    }
                 }
                 msg.content = newContent as any;
+             }
+          }
+          
+          if (extractedImages.length > 0 && lastUserMessageIndex !== -1) {
+             const lastUserMsg = params.prompt[lastUserMessageIndex];
+             if (Array.isArray(lastUserMsg.content)) {
+                lastUserMsg.content.push(...extractedImages);
+             } else if (typeof lastUserMsg.content === 'string') {
+                lastUserMsg.content = [
+                   { type: 'text', text: lastUserMsg.content },
+                   ...extractedImages
+                ] as any;
              }
           }
           return params;
