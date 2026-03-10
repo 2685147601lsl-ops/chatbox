@@ -558,6 +558,46 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
       })
     }
 
+    // INTERCEPT TOOL RESULTS TO PREVENT TOKEN OVERFLOW FROM BASE64 IMAGES
+    baseModel = wrapLanguageModel({
+      model: baseModel,
+      middleware: {
+        wrapGenerate: async ({ params, next }) => {
+          for (const msg of params.prompt) {
+             if (msg.role === 'tool' && Array.isArray(msg.content)) {
+                for (const contentPart of msg.content) {
+                   if (contentPart.type === 'tool-result' && contentPart.output) {
+                      const output = contentPart.output;
+                      // Vercel AI SDK might wrap string returns in json or text type.
+                      let rawString = null;
+                      if (output.type === 'text' && typeof output.value === 'string') {
+                          rawString = output.value;
+                      } else if (output.type === 'json' && typeof output.value === 'string') {
+                          rawString = output.value;
+                      }
+
+                      if (rawString && rawString.startsWith('[Image Data: data:image/')) {
+                         const match = rawString.match(/^\[Image Data: data:([^;]+);base64,(.*)\]$/);
+                         if (match) {
+                             const mediaType = match[1];
+                             const base64 = match[2];
+                             contentPart.output = {
+                                type: 'content',
+                                value: [
+                                   { type: 'image-data', data: base64, mediaType }
+                                ]
+                             };
+                         }
+                      }
+                   }
+                }
+             }
+          }
+          return next({ ...params });
+        }
+      }
+    })
+
     const retryable5xx = (context: RetryContext<LanguageModelV3>) => {
       if (isErrorAttempt(context.current)) {
         const { error } = context.current
