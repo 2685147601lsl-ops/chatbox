@@ -72,9 +72,12 @@ public class SystemControlPlugin extends Plugin {
 
     @PluginMethod
     public void checkPermissions(PluginCall call) {
-         // Placeholder for real permission checking
          JSObject ret = new JSObject();
-         ret.put("granted", false); // Default to false until we implement real checks
+         // Check accessibility service
+         boolean hasA11y = isAccessibilityServiceEnabled();
+         
+         // For now, if Accessibility is granted, we say true (since screenshots request dynamically)
+         ret.put("granted", hasA11y); 
          call.resolve(ret);
     }
     
