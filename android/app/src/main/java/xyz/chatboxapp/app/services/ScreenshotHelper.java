@@ -69,6 +69,15 @@ public class ScreenshotHelper {
                     return;
                 }
 
+                // Android 14+ requires registering a callback before creating the virtual display
+                mediaProjection.registerCallback(new MediaProjection.Callback() {
+                    @Override
+                    public void onStop() {
+                        super.onStop();
+                        stopProjection();
+                    }
+                }, new android.os.Handler(android.os.Looper.getMainLooper()));
+
                 imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2);
                 virtualDisplay = mediaProjection.createVirtualDisplay("ScreenCapture",
                         width, height, density,
